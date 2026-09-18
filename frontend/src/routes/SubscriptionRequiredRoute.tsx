@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Navigate, Outlet } from "react-router-dom";
-import { Loader2 } from "lucide-react";
 import { getCurrentSubscription } from "../services/subscriptionApi";
+import SubscriptionCheckingScreen from "../components/SubscriptionCheckingScreen";
 
 type SubscriptionCheckState = "LOADING" | "ACTIVE" | "INACTIVE" | "ERROR";
 
@@ -38,18 +38,8 @@ export default function SubscriptionRequiredRoute() {
     };
   }, [retryKey]);
 
-  if (state === "LOADING") {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-100">
-        <div className="text-center">
-          <Loader2 size={30} className="mx-auto animate-spin text-slate-500" />
-
-          <p className="mt-3 text-sm text-slate-500">
-            Checking your Taxlume subscription...
-          </p>
-        </div>
-      </div>
-    );
+  if (status === "LOADING") {
+    return <SubscriptionCheckingScreen />;
   }
 
   if (state === "INACTIVE") {

@@ -12,6 +12,7 @@ import {
 import { clearAuthToken } from "../services/authStorage";
 import { clearSession } from "../services/sessionStorage";
 import { loadRazorpayCheckout } from "../payments/loadRazorpayCheckout";
+import SubscriptionCheckingScreen from "../components/SubscriptionCheckingScreen";
 
 function formatMoney(amountPaise: number): string {
   return new Intl.NumberFormat("en-IN", {
@@ -260,14 +261,7 @@ export default function Subscribe() {
   }
 
   if (isCheckingSubscription) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50">
-        <div className="flex items-center gap-3 text-slate-600">
-          <Loader2 className="h-5 w-5 animate-spin" />
-          <span>Checking your Taxlume subscription...</span>
-        </div>
-      </div>
-    );
+    return <SubscriptionCheckingScreen />;
   }
 
   return (
