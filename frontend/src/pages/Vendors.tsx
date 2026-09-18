@@ -305,7 +305,7 @@ export default function Vendors() {
             <p className="text-sm text-slate-500">Loading vendors...</p>
           </div>
         ) : filteredVendors.length === 0 ? (
-          <div className="flex px-6 py-16 text-center">
+          <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
             <h2 className="mt-4 text-sm font-semibold text-slate-900">
               {search ? (
                 "No vendors found"
