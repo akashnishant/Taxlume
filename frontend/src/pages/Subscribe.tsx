@@ -43,6 +43,35 @@ export default function Subscribe() {
   const [paymentMessage, setPaymentMessage] = useState("");
 
   useEffect(() => {
+    let isMounted = true;
+
+    async function checkExistingSubscription() {
+      try {
+        const current = await getCurrentSubscription();
+
+        if (!isMounted) {
+          return;
+        }
+
+        if (current.has_active_subscription) {
+          navigate("/", { replace: true });
+        }
+      } catch (error) {
+        console.error(
+          "Unable to check current subscription before loading checkout:",
+          error,
+        );
+      }
+    }
+
+    void checkExistingSubscription();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [navigate]);
+
+  useEffect(() => {
     async function loadPlans() {
       try {
         setIsLoading(true);
