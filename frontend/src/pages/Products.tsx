@@ -275,9 +275,7 @@ export default function Products() {
             </h3>
 
             <p className="mt-1 text-sm text-slate-500">
-              {search
-                ? "Try a different search term."
-                : "Add your first product or service to get started."}
+              {search ? "Try a different search term." : ""}
             </p>
           </div>
         ) : (

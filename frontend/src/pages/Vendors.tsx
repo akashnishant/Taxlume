@@ -305,7 +305,7 @@ export default function Vendors() {
             <p className="text-sm text-slate-500">Loading vendors...</p>
           </div>
         ) : filteredVendors.length === 0 ? (
-          <div className="flex min-h-64 flex-col items-center justify-center px-6 text-center">
+          <div className="flex px-6 py-16 text-center">
             <h2 className="mt-4 text-sm font-semibold text-slate-900">
               {search ? (
                 "No vendors found"
@@ -319,9 +319,7 @@ export default function Vendors() {
             </h2>
 
             <p className="mt-1 max-w-sm text-sm text-slate-500">
-              {search
-                ? "Try a different search term."
-                : "Add your first vendor to get started."}
+              {search ? "Try a different search term." : ""}
             </p>
           </div>
         ) : (

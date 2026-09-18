@@ -306,9 +306,7 @@ export default function Customers() {
             </h3>
 
             <p className="mt-1 text-sm text-slate-500">
-              {search
-                ? "Try a different search term."
-                : "Add your first customer to start creating invoices."}
+              {search ? "Try a different search term." : ""}
             </p>
           </div>
         ) : (
