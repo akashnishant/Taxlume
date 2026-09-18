@@ -264,7 +264,7 @@ export default function Subscribe() {
       <div className="flex min-h-screen items-center justify-center bg-slate-50">
         <div className="flex items-center gap-3 text-slate-600">
           <Loader2 className="h-5 w-5 animate-spin" />
-          <span>Checking your subscription...</span>
+          <span>Checking your Taxlume subscription...</span>
         </div>
       </div>
     );
