@@ -11,6 +11,7 @@ import {
 import type { CreateCustomerRequest } from "../services/customerApi";
 import { gstStates } from "../constants/gstStates";
 import MasterListEmptyState from "../components/MasterListEmptyState";
+import { getApiErrorMessage } from "../utils/apiErrorMessage";
 
 export default function Customers() {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -227,11 +228,14 @@ export default function Customers() {
       setIsAddOpen(false);
       setEditingCustomerId(null);
       setForm(createEmptyCustomerForm());
-    } catch {
+    } catch (error) {
       setFormError(
-        editingCustomerId
-          ? "Unable to update customer. Please check the details and try again."
-          : "Unable to create customer. Please check the details and try again.",
+        getApiErrorMessage(
+          error,
+          editingCustomerId
+            ? "Unable to update customer. Please check the details and try again."
+            : "Unable to create customer. Please check the details and try again.",
+        ),
       );
     } finally {
       setIsSaving(false);

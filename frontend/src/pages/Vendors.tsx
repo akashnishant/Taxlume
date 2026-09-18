@@ -11,6 +11,7 @@ import {
 } from "../services/vendorApi";
 import { gstStates } from "../constants/gstStates";
 import MasterListEmptyState from "../components/MasterListEmptyState";
+import { getApiErrorMessage } from "../utils/apiErrorMessage";
 
 type VendorForm = CreateVendorRequest & {
   address: NonNullable<CreateVendorRequest["address"]>;
@@ -170,11 +171,14 @@ export default function Vendors() {
       setForm(createEmptyVendorForm());
       setEditingVendorId(null);
       setIsAddOpen(false);
-    } catch {
+    } catch (error) {
       setFormError(
-        editingVendorId
-          ? "Unable to update vendor. Please check the details and try again."
-          : "Unable to save vendor. Please check the details and try again.",
+        getApiErrorMessage(
+          error,
+          editingVendorId
+            ? "Unable to update vendor. Please check the details and try again."
+            : "Unable to save vendor. Please check the details and try again.",
+        ),
       );
     } finally {
       setIsSaving(false);
