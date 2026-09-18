@@ -1,88 +1,267 @@
 import { useEffect, useState } from "react";
-import { FileText, Package, Users, Wallet } from "lucide-react";
-import { getCustomers } from "../services/customerApi";
-import { getProducts } from "../services/productApi";
-import { getInvoices } from "../services/invoiceApi";
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  FileText,
+  Loader2,
+  ReceiptIndianRupee,
+  Users,
+  Wallet,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import {
+  getDashboardSummary,
+  type DashboardData,
+  type DashboardRecentDocument,
+} from "../services/dashboardApi";
+
+function formatMoney(amountPaise: number, currencyCode: string): string {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: currencyCode || "INR",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amountPaise / 100);
+}
+
+function formatDate(value: string): string {
+  const date = new Date(`${value}T00:00:00`);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(date);
+}
+
+function statusLabel(status: string): string {
+  switch (status) {
+    case "ISSUED":
+      return "Issued";
+
+    case "DRAFT":
+      return "Draft";
+
+    case "CANCELLED":
+      return "Cancelled";
+
+    default:
+      return status;
+  }
+}
+
+function statusClass(status: string): string {
+  switch (status) {
+    case "ISSUED":
+      return "bg-emerald-50 text-emerald-700";
+
+    case "CANCELLED":
+      return "bg-red-50 text-red-700";
+
+    default:
+      return "bg-slate-100 text-slate-600";
+  }
+}
+
+type RecentDocumentsProps = {
+  title: string;
+  documents: DashboardRecentDocument[];
+  emptyText: string;
+  basePath: "/sales" | "/purchases";
+};
+
+function RecentDocuments({
+  title,
+  documents,
+  emptyText,
+  basePath,
+}: RecentDocumentsProps) {
+  const navigate = useNavigate();
+
+  return (
+    <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+        <h3 className="font-semibold text-slate-900">{title}</h3>
+
+        <button
+          type="button"
+          onClick={() => navigate(basePath)}
+          className="text-sm font-medium text-slate-600 transition hover:text-slate-900"
+        >
+          View all
+        </button>
+      </div>
+
+      {documents.length === 0 ? (
+        <div className="px-6 py-12 text-center">
+          <FileText size={32} className="mx-auto text-slate-300" />
+
+          <p className="mt-3 text-sm text-slate-500">{emptyText}</p>
+        </div>
+      ) : (
+        <div className="divide-y divide-slate-100">
+          {documents.map((document) => (
+            <button
+              key={document.id}
+              type="button"
+              onClick={() => navigate(`${basePath}/${document.id}`)}
+              className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-slate-50"
+            >
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-slate-900">
+                  {document.document_number}
+                </p>
+
+                <p className="mt-1 truncate text-xs text-slate-500">
+                  {document.party_name || "No party"} ·{" "}
+                  {formatDate(document.document_date)}
+                </p>
+              </div>
+
+              <div className="shrink-0 text-right">
+                <p className="text-sm font-semibold text-slate-900">
+                  {formatMoney(document.total_paise, document.currency_code)}
+                </p>
+
+                <span
+                  className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusClass(
+                    document.status,
+                  )}`}
+                >
+                  {statusLabel(document.status)}
+                </span>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
 
 export default function Dashboard() {
-  const [customerCount, setCustomerCount] = useState(0);
-  const [productCount, setProductCount] = useState(0);
-  const [invoiceCount, setInvoiceCount] = useState(0);
+  const navigate = useNavigate();
+
+  const [data, setData] = useState<DashboardData | null>(null);
+
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [error, setError] = useState("");
+
+  async function loadDashboard() {
+    try {
+      setIsLoading(true);
+      setError("");
+
+      const result = await getDashboardSummary();
+
+      setData(result);
+    } catch (loadError) {
+      console.error("Unable to load dashboard:", loadError);
+
+      setData(null);
+
+      setError("Unable to load your business dashboard. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   useEffect(() => {
-    async function loadCustomers() {
-      try {
-        const customers = await getCustomers();
-        setCustomerCount(customers.length);
-      } catch {
-        setCustomerCount(0);
-      }
-    }
-
-    loadCustomers();
+    void loadDashboard();
   }, []);
 
-  useEffect(() => {
-    async function loadProducts() {
-      try {
-        const products = await getProducts();
-        setProductCount(products.length);
-      } catch {
-        setProductCount(0);
-      }
-    }
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="text-center">
+          <Loader2 size={30} className="mx-auto animate-spin text-slate-500" />
 
-    loadProducts();
-  }, []);
+          <p className="mt-3 text-sm text-slate-500">
+            Loading your dashboard...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
-  useEffect(() => {
-    async function loadInvoices() {
-      try {
-        const result = await getInvoices();
-        setInvoiceCount(result.total);
-      } catch {
-        setInvoiceCount(0);
-      }
-    }
+  if (!data) {
+    return (
+      <main className="mx-auto max-w-7xl px-6 py-8">
+        <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center">
+          <p className="text-sm text-red-700">{error}</p>
 
-    loadInvoices();
-  }, []);
+          <button
+            type="button"
+            onClick={() => void loadDashboard()}
+            className="mt-4 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+          >
+            Try again
+          </button>
+        </div>
+      </main>
+    );
+  }
+
+  const { summary, recent_sales, recent_purchases } = data;
 
   const stats = [
     {
       title: "Total Sales",
-      value: "₹0.00",
-      description: "This month",
+      value: formatMoney(summary.total_sales_paise, summary.currency_code),
+      description: "Issued tax invoices",
+      icon: ArrowUpRight,
+    },
+
+    {
+      title: "Purchase Orders",
+      value: formatMoney(summary.total_purchases_paise, summary.currency_code),
+      description: "Issued purchase orders",
+      icon: ArrowDownLeft,
+    },
+
+    {
+      title: "Outstanding Sales",
+      value: formatMoney(
+        summary.outstanding_sales_paise,
+        summary.currency_code,
+      ),
+      description: "Amount still receivable",
       icon: Wallet,
     },
-    {
-      title: "Invoices",
-      value: invoiceCount,
-      description: "This month",
-      icon: FileText,
-    },
+
     {
       title: "Customers",
-      value: customerCount,
+      value: summary.customer_count.toString(),
       description: "Active customers",
       icon: Users,
-    },
-    {
-      title: "Products",
-      value: productCount,
-      description: "Active products",
-      icon: Package,
     },
   ];
 
   return (
     <div className="min-h-screen">
       <main className="mx-auto max-w-7xl px-6 py-8">
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-slate-900">Dashboard</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            Here's an overview of your business.
-          </p>
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900">Dashboard</h2>
+
+            <p className="mt-1 text-sm text-slate-500">
+              Here's an overview of your business.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => navigate("/sales/new")}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+          >
+            <FileText size={18} />
+            Create Sale
+          </button>
         </div>
 
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -94,13 +273,13 @@ export default function Dashboard() {
                 key={stat.title}
                 className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
               >
-                <div className="flex items-start justify-between">
-                  <div>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
                     <p className="text-sm font-medium text-slate-500">
                       {stat.title}
                     </p>
 
-                    <p className="mt-2 text-2xl font-bold text-slate-900">
+                    <p className="mt-2 truncate text-2xl font-bold text-slate-900">
                       {stat.value}
                     </p>
 
@@ -109,7 +288,7 @@ export default function Dashboard() {
                     </p>
                   </div>
 
-                  <div className="rounded-lg bg-slate-100 p-2.5">
+                  <div className="shrink-0 rounded-lg bg-slate-100 p-2.5">
                     <Icon size={20} className="text-slate-700" />
                   </div>
                 </div>
@@ -118,23 +297,64 @@ export default function Dashboard() {
           })}
         </div>
 
-        <div className="mt-8 rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-          <FileText size={40} className="mx-auto text-slate-300" />
+        <div className="mt-5 grid gap-5 md:grid-cols-2">
+          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-500">
+                  Sales This Month
+                </p>
 
-          <h3 className="mt-4 text-lg font-semibold text-slate-900">
-            No invoices yet
-          </h3>
+                <p className="mt-2 text-2xl font-bold text-slate-900">
+                  {formatMoney(
+                    summary.this_month_sales_paise,
+                    summary.currency_code,
+                  )}
+                </p>
+              </div>
 
-          <p className="mt-1 text-sm text-slate-500">
-            Create your first invoice to start tracking your business activity.
-          </p>
+              <div className="rounded-lg bg-slate-100 p-3">
+                <ReceiptIndianRupee size={22} className="text-slate-700" />
+              </div>
+            </div>
+          </div>
 
-          <button
-            type="button"
-            className="mt-5 rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
-          >
-            Create Invoice
-          </button>
+          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-500">
+                  Purchase Orders This Month
+                </p>
+
+                <p className="mt-2 text-2xl font-bold text-slate-900">
+                  {formatMoney(
+                    summary.this_month_purchases_paise,
+                    summary.currency_code,
+                  )}
+                </p>
+              </div>
+
+              <div className="rounded-lg bg-slate-100 p-3">
+                <ReceiptIndianRupee size={22} className="text-slate-700" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-8 grid gap-6 xl:grid-cols-2">
+          <RecentDocuments
+            title="Recent Sales"
+            documents={recent_sales}
+            emptyText="No tax invoices have been created yet."
+            basePath="/sales"
+          />
+
+          <RecentDocuments
+            title="Recent Purchase Orders"
+            documents={recent_purchases}
+            emptyText="No purchase orders have been created yet."
+            basePath="/purchases"
+          />
         </div>
       </main>
     </div>

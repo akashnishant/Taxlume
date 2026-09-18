@@ -41,6 +41,7 @@ import { SubscriptionCurrent } from "./endpoints/subscriptionCurrent";
 import { SubscriptionCheckout } from "./endpoints/subscriptionCheckout";
 import { razorpayWebhookHandler } from "./endpoints/razorpayWebhook";
 import { SubscriptionReconcile } from "./endpoints/subscriptionReconcile";
+import { DashboardSummary } from "./endpoints/dashboardSummary";
 
 import { authMiddleware } from "./middleware/auth";
 import { subscriptionMiddleware } from "./middleware/subscription";
@@ -127,6 +128,21 @@ app.use(
 openapi.post(
     "/api/subscriptions/reconcile",
     SubscriptionReconcile,
+);
+
+app.use(
+    "/api/dashboard/*",
+    authMiddleware,
+);
+
+app.use(
+    "/api/dashboard/*",
+    subscriptionMiddleware,
+);
+
+openapi.get(
+    "/api/dashboard/summary",
+    DashboardSummary,
 );
 
 app.use(
