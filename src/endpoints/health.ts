@@ -44,7 +44,7 @@ export class HealthCheck extends OpenAPIRoute {
 
             return {
                 success: true,
-                message: "BillDesk API is running",
+                message: "Taxlume API is running",
                 database: "connected",
             };
         } catch (error) {

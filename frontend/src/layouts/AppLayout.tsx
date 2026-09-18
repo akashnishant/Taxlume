@@ -112,7 +112,7 @@ export default function AppLayout() {
               B
             </div>
 
-            <span className="text-lg font-bold text-slate-900">BillDesk</span>
+            <span className="text-lg font-bold text-slate-900">Taxlume</span>
           </Link>
 
           <button
