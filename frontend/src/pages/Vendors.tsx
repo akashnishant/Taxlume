@@ -306,10 +306,6 @@ export default function Vendors() {
           </div>
         ) : filteredVendors.length === 0 ? (
           <div className="flex min-h-64 flex-col items-center justify-center px-6 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
-              <Truck size={22} className="text-slate-500" />
-            </div>
-
             <h2 className="mt-4 text-sm font-semibold text-slate-900">
               {search ? (
                 "No vendors found"
