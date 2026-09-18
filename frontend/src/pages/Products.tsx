@@ -9,6 +9,7 @@ import {
   type CreateProductRequest,
   type Product,
 } from "../services/productApi";
+import MasterListEmptyState from "../components/MasterListEmptyState";
 
 function formatRupees(paise: number): string {
   return `₹${(paise / 100).toFixed(2)}`;
@@ -264,9 +265,15 @@ export default function Products() {
             <Package size={40} className="mx-auto text-slate-300" />
 
             <h3 className="mt-4 text-base font-semibold text-slate-900">
-              {search
-                ? "No matching products or services"
-                : "No products or services yet"}
+              {search ? (
+                "No matching products or services"
+              ) : (
+                <MasterListEmptyState
+                  icon={Package}
+                  title="No products or services yet"
+                  description="Add your first product or service to get started."
+                />
+              )}
             </h3>
 
             <p className="mt-1 text-sm text-slate-500">

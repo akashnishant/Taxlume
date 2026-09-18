@@ -10,6 +10,7 @@ import {
 } from "../services/customerApi";
 import type { CreateCustomerRequest } from "../services/customerApi";
 import { gstStates } from "../constants/gstStates";
+import MasterListEmptyState from "../components/MasterListEmptyState";
 
 export default function Customers() {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -295,7 +296,15 @@ export default function Customers() {
             <Users size={42} className="mx-auto text-slate-300" />
 
             <h3 className="mt-4 text-lg font-semibold text-slate-900">
-              {search ? "No customers found" : "No customers yet"}
+              {search ? (
+                "No customers found"
+              ) : (
+                <MasterListEmptyState
+                  icon={Users}
+                  title="No customers yet"
+                  description="Add your first customer to start creating invoices."
+                />
+              )}
             </h3>
 
             <p className="mt-1 text-sm text-slate-500">

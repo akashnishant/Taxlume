@@ -10,6 +10,7 @@ import {
   type CreateVendorRequest,
 } from "../services/vendorApi";
 import { gstStates } from "../constants/gstStates";
+import MasterListEmptyState from "../components/MasterListEmptyState";
 
 type VendorForm = CreateVendorRequest & {
   address: NonNullable<CreateVendorRequest["address"]>;
@@ -310,7 +311,15 @@ export default function Vendors() {
             </div>
 
             <h2 className="mt-4 text-sm font-semibold text-slate-900">
-              {search ? "No vendors found" : "No vendors yet"}
+              {search ? (
+                "No vendors found"
+              ) : (
+                <MasterListEmptyState
+                  icon={Truck}
+                  title="No vendors yet"
+                  description="Add your first vendor to get started."
+                />
+              )}
             </h2>
 
             <p className="mt-1 max-w-sm text-sm text-slate-500">
