@@ -42,6 +42,8 @@ export default function Subscribe() {
 
   const [paymentMessage, setPaymentMessage] = useState("");
 
+  const [isCheckingSubscription, setIsCheckingSubscription] = useState(true);
+
   useEffect(() => {
     let isMounted = true;
 
@@ -55,12 +57,19 @@ export default function Subscribe() {
 
         if (current.has_active_subscription) {
           navigate("/", { replace: true });
+          return;
         }
+
+        setIsCheckingSubscription(false);
       } catch (error) {
         console.error(
           "Unable to check current subscription before loading checkout:",
           error,
         );
+
+        if (isMounted) {
+          setIsCheckingSubscription(false);
+        }
       }
     }
 
@@ -248,6 +257,17 @@ export default function Subscribe() {
     navigate("/login", {
       replace: true,
     });
+  }
+
+  if (isCheckingSubscription) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+        <div className="flex items-center gap-3 text-slate-600">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          <span>Checking your subscription...</span>
+        </div>
+      </div>
+    );
   }
 
   return (
