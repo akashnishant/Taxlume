@@ -12,6 +12,7 @@ import type { CreateCustomerRequest } from "../services/customerApi";
 import { gstStates } from "../constants/gstStates";
 import MasterListEmptyState from "../components/MasterListEmptyState";
 import { getApiErrorMessage } from "../utils/apiErrorMessage";
+import { validatePartyTaxIds } from "../utils/validatePartyTaxIds";
 
 export default function Customers() {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -187,6 +188,18 @@ export default function Customers() {
 
     if (!form.address?.pincode?.trim()) {
       setFormError("Pincode is required.");
+      return;
+    }
+
+    const taxIdError = validatePartyTaxIds({
+      gstin: form.gstin,
+      pan: form.pan,
+      stateCode: form.address.state_code,
+      country: form.address.country,
+    });
+
+    if (taxIdError) {
+      setFormError(taxIdError);
       return;
     }
 

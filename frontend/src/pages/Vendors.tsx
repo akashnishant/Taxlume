@@ -12,6 +12,7 @@ import {
 import { gstStates } from "../constants/gstStates";
 import MasterListEmptyState from "../components/MasterListEmptyState";
 import { getApiErrorMessage } from "../utils/apiErrorMessage";
+import { validatePartyTaxIds } from "../utils/validatePartyTaxIds";
 
 type VendorForm = CreateVendorRequest & {
   address: NonNullable<CreateVendorRequest["address"]>;
@@ -125,6 +126,18 @@ export default function Vendors() {
 
     if (!form.address.pincode?.trim()) {
       setFormError("Pincode is required.");
+      return;
+    }
+
+    const taxIdError = validatePartyTaxIds({
+      gstin: form.gstin,
+      pan: form.pan,
+      stateCode: form.address.state_code,
+      country: form.address.country,
+    });
+
+    if (taxIdError) {
+      setFormError(taxIdError);
       return;
     }
 
