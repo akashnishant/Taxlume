@@ -42,6 +42,9 @@ import { SubscriptionCheckout } from "./endpoints/subscriptionCheckout";
 import { razorpayWebhookHandler } from "./endpoints/razorpayWebhook";
 import { SubscriptionReconcile } from "./endpoints/subscriptionReconcile";
 import { DashboardSummary } from "./endpoints/dashboardSummary";
+import { ReportSalesRegister } from "./endpoints/reportSalesRegister";
+import { ReportPurchaseOrderRegister } from "./endpoints/reportPurchaseOrderRegister";
+import { ReportTaxSummary } from "./endpoints/reportTaxSummary";
 
 import { authMiddleware } from "./middleware/auth";
 import { subscriptionMiddleware } from "./middleware/subscription";
@@ -143,6 +146,27 @@ app.use(
 openapi.get(
     "/api/dashboard/summary",
     DashboardSummary,
+);
+
+app.use(
+  "/api/reports/*",
+  authMiddleware,
+  subscriptionMiddleware,
+);
+
+openapi.get(
+  "/api/reports/sales",
+  ReportSalesRegister,
+);
+
+openapi.get(
+  "/api/reports/purchase-orders",
+  ReportPurchaseOrderRegister,
+);
+
+openapi.get(
+  "/api/reports/tax-summary",
+  ReportTaxSummary,
 );
 
 app.use(

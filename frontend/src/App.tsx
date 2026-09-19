@@ -16,6 +16,7 @@ import Purchases from "./pages/Purchases";
 import NewPurchase from "./pages/NewPurchase";
 import Subscribe from "./pages/Subscribe";
 import SubscriptionRequiredRoute from "./routes/SubscriptionRequiredRoute";
+import Reports from "./pages/Reports";
 
 function App() {
   return (
@@ -44,6 +45,7 @@ function App() {
               <Route path="/customers" element={<Customers />} />
               <Route path="/vendors" element={<Vendors />} />
               <Route path="/products" element={<Products />} />
+              <Route path="/reports" element={<Reports />} />
               <Route path="/settings" element={<Settings />} />
             </Route>
           </Route>
