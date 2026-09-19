@@ -8,14 +8,22 @@ import {
   type Company,
 } from "../services/companyApi";
 import {
+  deletePaymentQr,
   getPaymentDetails,
   updatePaymentDetails,
   uploadPaymentQr,
   type PaymentDetails,
 } from "../services/paymentDetailsApi";
 import { gstStates } from "../constants/gstStates";
+import LoadingState from "../components/LoadingState";
+import ButtonLoadingContent from "../components/ButtonLoadingContent";
+import { useNotification } from "../hooks/useNotifications";
+import { LoaderCircle } from "lucide-react";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 export default function Settings() {
+  const notify = useNotification();
+
   const [company, setCompany] = useState<Company | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
@@ -26,8 +34,6 @@ export default function Settings() {
 
   const [saveError, setSaveError] = useState("");
 
-  const [saveSuccess, setSaveSuccess] = useState("");
-
   const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(
     null,
   );
@@ -36,13 +42,13 @@ export default function Settings() {
 
   const [paymentSaveError, setPaymentSaveError] = useState("");
 
-  const [paymentSaveSuccess, setPaymentSaveSuccess] = useState("");
-
   const [isUploadingQr, setIsUploadingQr] = useState(false);
 
-  const [qrError, setQrError] = useState("");
+  const [isQrDeleteOpen, setIsQrDeleteOpen] = useState(false);
+  const [isDeletingQr, setIsDeletingQr] = useState(false);
+  const [qrDeleteError, setQrDeleteError] = useState("");
 
-  const [qrSuccess, setQrSuccess] = useState("");
+  const [qrError, setQrError] = useState("");
 
   const [signaturePreviewUrl, setSignaturePreviewUrl] = useState<string | null>(
     null,
@@ -54,7 +60,7 @@ export default function Settings() {
 
   const [signatureError, setSignatureError] = useState("");
 
-  const [signatureSuccess, setSignatureSuccess] = useState("");
+  const [isSignatureDeleteOpen, setIsSignatureDeleteOpen] = useState(false);
 
   useEffect(() => {
     async function loadCompany() {
@@ -106,8 +112,6 @@ export default function Settings() {
           }
         : currentCompany,
     );
-
-    setSaveSuccess("");
   }
 
   function updatePaymentField<K extends keyof PaymentDetails>(
@@ -122,14 +126,14 @@ export default function Settings() {
           }
         : current,
     );
-
-    setPaymentSaveSuccess("");
   }
 
   async function handleSave() {
-    if (!company) {
+    if (!company || isSaving) {
       return;
     }
+
+    setSaveError("");
 
     if (!company.legal_name.trim()) {
       setSaveError("Legal Name is required.");
@@ -142,7 +146,6 @@ export default function Settings() {
 
     setIsSaving(true);
     setSaveError("");
-    setSaveSuccess("");
 
     try {
       const updatedCompany = await updateCompany({
@@ -181,7 +184,11 @@ export default function Settings() {
 
       setCompany(updatedCompany);
 
-      setSaveSuccess("Company settings saved successfully.");
+      notify({
+        type: "success",
+        title: "Company details saved",
+        description: "Your company settings have been updated successfully.",
+      });
     } catch {
       setSaveError(
         "Unable to save company settings. Please check the entered details.",
@@ -192,13 +199,12 @@ export default function Settings() {
   }
 
   async function handleSavePaymentDetails() {
-    if (!paymentDetails) {
+    if (!paymentDetails || isSavingPaymentDetails) {
       return;
     }
 
     setIsSavingPaymentDetails(true);
     setPaymentSaveError("");
-    setPaymentSaveSuccess("");
 
     try {
       const updated = await updatePaymentDetails({
@@ -219,11 +225,72 @@ export default function Settings() {
 
       setPaymentDetails(updated);
 
-      setPaymentSaveSuccess("Payment details saved successfully.");
+      notify({
+        type: "success",
+        title: "Payment details saved",
+        description:
+          "Your bank and payment settings have been updated successfully.",
+      });
     } catch {
       setPaymentSaveError("Unable to save payment details.");
     } finally {
       setIsSavingPaymentDetails(false);
+    }
+  }
+
+  function requestQrDelete() {
+    if (
+      !paymentDetails?.qr_code_key ||
+      isUploadingQr ||
+      isDeletingQr ||
+      isSavingPaymentDetails
+    ) {
+      return;
+    }
+
+    setQrDeleteError("");
+    setIsQrDeleteOpen(true);
+  }
+
+  async function handleQrDelete() {
+    if (
+      !isQrDeleteOpen ||
+      !paymentDetails?.qr_code_key ||
+      isUploadingQr ||
+      isDeletingQr ||
+      isSavingPaymentDetails
+    ) {
+      return;
+    }
+
+    setIsDeletingQr(true);
+    setQrDeleteError("");
+
+    try {
+      await deletePaymentQr();
+
+      setPaymentDetails((current) =>
+        current
+          ? {
+              ...current,
+              qr_code_key: null,
+            }
+          : current,
+      );
+
+      setIsQrDeleteOpen(false);
+
+      notify({
+        type: "success",
+        title: "Payment QR code removed",
+        description: "The QR code has been removed from your payment settings.",
+      });
+    } catch {
+      setQrDeleteError(
+        "Unable to remove the payment QR code. Please try again.",
+      );
+    } finally {
+      setIsDeletingQr(false);
     }
   }
 
@@ -256,7 +323,6 @@ export default function Settings() {
 
     setIsUploadingQr(true);
     setQrError("");
-    setQrSuccess("");
 
     try {
       const response = await uploadPaymentQr(file);
@@ -270,7 +336,11 @@ export default function Settings() {
           : current,
       );
 
-      setQrSuccess("Payment QR code uploaded successfully.");
+      notify({
+        type: "success",
+        title: "Payment QR code uploaded",
+        description: "Your payment QR code has been saved successfully.",
+      });
     } catch {
       setQrError("Unable to upload the payment QR code.");
     } finally {
@@ -304,7 +374,6 @@ export default function Settings() {
 
     setIsUploadingSignature(true);
     setSignatureError("");
-    setSignatureSuccess("");
 
     try {
       const response = await uploadCompanySignature(file);
@@ -318,11 +387,28 @@ export default function Settings() {
           : current,
       );
 
-      const signatureDataUrl = await getCompanySignatureDataUrl();
+      // The upload has already succeeded. Fetching the preview is
+      // a separate operation and should not turn a successful upload
+      // into an apparent upload failure.
+      try {
+        const signatureDataUrl = await getCompanySignatureDataUrl();
+        setSignaturePreviewUrl(signatureDataUrl);
 
-      setSignaturePreviewUrl(signatureDataUrl);
+        notify({
+          type: "success",
+          title: "Authorized signature uploaded",
+          description: "Your signature has been saved successfully.",
+        });
+      } catch {
+        setSignaturePreviewUrl(null);
 
-      setSignatureSuccess("Authorized signature uploaded successfully.");
+        notify({
+          type: "warning",
+          title: "Authorized signature uploaded",
+          description:
+            "The signature was saved, but its preview could not be loaded. Refresh Settings to try loading the preview again.",
+        });
+      }
     } catch {
       setSignatureError("Unable to upload the authorized signature.");
     } finally {
@@ -331,20 +417,31 @@ export default function Settings() {
     }
   }
 
-  async function handleSignatureDelete() {
-    if (!company?.signature_key) {
+  function requestSignatureDelete() {
+    if (
+      !company?.signature_key ||
+      isUploadingSignature ||
+      isDeletingSignature
+    ) {
       return;
     }
 
-    const confirmed = window.confirm("Remove the authorized signature?");
+    setSignatureError("");
+    setIsSignatureDeleteOpen(true);
+  }
 
-    if (!confirmed) {
+  async function handleSignatureDelete() {
+    if (
+      !isSignatureDeleteOpen ||
+      !company?.signature_key ||
+      isUploadingSignature ||
+      isDeletingSignature
+    ) {
       return;
     }
 
     setIsDeletingSignature(true);
     setSignatureError("");
-    setSignatureSuccess("");
 
     try {
       await deleteCompanySignature();
@@ -359,10 +456,19 @@ export default function Settings() {
       );
 
       setSignaturePreviewUrl(null);
+      setIsSignatureDeleteOpen(false);
 
-      setSignatureSuccess("Authorized signature removed successfully.");
+      notify({
+        type: "success",
+        title: "Authorized signature removed",
+        description: "The signature has been removed from company settings.",
+      });
     } catch {
-      setSignatureError("Unable to remove the authorized signature.");
+      // Keep the dialog open so the user can read the error
+      // and choose whether to retry or cancel.
+      setSignatureError(
+        "Unable to remove the authorized signature. Please try again.",
+      );
     } finally {
       setIsDeletingSignature(false);
     }
@@ -371,7 +477,10 @@ export default function Settings() {
   if (isLoading) {
     return (
       <main className="mx-auto max-w-7xl px-6 py-8">
-        <p className="text-sm text-slate-500">Loading company settings...</p>
+        <LoadingState
+          message="Loading settings..."
+          description="Fetching your company details and authorized signature."
+        />
       </main>
     );
   }
@@ -556,8 +665,6 @@ export default function Settings() {
                       }
                     : currentCompany,
                 );
-
-                setSaveSuccess("");
               }}
               className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-slate-500"
             >
@@ -604,20 +711,18 @@ export default function Settings() {
           </div>
         )}
 
-        {saveSuccess && (
-          <div className="mt-6 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            {saveSuccess}
-          </div>
-        )}
-
         <div className="mt-6 flex justify-end">
           <button
             type="button"
             onClick={handleSave}
-            disabled={isSaving || !company.legal_name.trim()}
-            className="cursor-pointer rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={isSaving}
+            className="cursor-pointer rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50 inline-flex items-center justify-center"
           >
-            {isSaving ? "Saving..." : "Save Company Details"}
+            {isSaving ? (
+              <ButtonLoadingContent message="Saving company details..." />
+            ) : (
+              "Save Company Details"
+            )}
           </button>
         </div>
       </section>
@@ -658,9 +763,17 @@ export default function Settings() {
             </p>
 
             {isUploadingSignature && (
-              <p className="mt-3 text-sm text-slate-500">
-                Uploading signature...
-              </p>
+              <div
+                role="status"
+                className="mt-3 inline-flex items-center gap-2 text-sm text-slate-600"
+              >
+                <LoaderCircle
+                  size={16}
+                  className="animate-spin"
+                  aria-hidden="true"
+                />
+                Uploading authorized signature...
+              </div>
             )}
 
             {company.signature_key && (
@@ -682,11 +795,15 @@ export default function Settings() {
                 <div className="mt-3">
                   <button
                     type="button"
-                    onClick={handleSignatureDelete}
+                    onClick={requestSignatureDelete}
                     disabled={isDeletingSignature || isUploadingSignature}
-                    className="cursor-pointer rounded-md border border-red-300 px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="cursor-pointer rounded-md border border-red-300 px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 inline-flex items-center justify-center"
                   >
-                    {isDeletingSignature ? "Removing..." : "Remove Signature"}
+                    {isDeletingSignature ? (
+                      <ButtonLoadingContent message="Removing signature..." />
+                    ) : (
+                      "Remove Signature"
+                    )}
                   </button>
                 </div>
               </div>
@@ -697,12 +814,6 @@ export default function Settings() {
         {signatureError && (
           <div className="mt-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {signatureError}
-          </div>
-        )}
-
-        {signatureSuccess && (
-          <div className="mt-6 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            {signatureSuccess}
           </div>
         )}
       </section>
@@ -849,7 +960,7 @@ export default function Settings() {
                   type="file"
                   accept="image/png,image/jpeg,image/webp"
                   onChange={handleQrUpload}
-                  disabled={isUploadingQr}
+                  disabled={isUploadingQr || isDeletingQr}
                   className="block w-full text-sm text-slate-600 file:mr-4 file:cursor-pointer file:rounded-md file:border-0 file:bg-slate-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-slate-700 hover:file:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
                 />
 
@@ -858,15 +969,40 @@ export default function Settings() {
                 </p>
 
                 {paymentDetails.qr_code_key && (
-                  <p className="mt-2 text-xs font-medium text-emerald-600">
-                    QR code is currently configured.
-                  </p>
+                  <div className="mt-3">
+                    <p className="text-xs font-medium text-emerald-600">
+                      QR code is currently configured.
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={requestQrDelete}
+                      disabled={
+                        isUploadingQr || isDeletingQr || isSavingPaymentDetails
+                      }
+                      className="mt-3 inline-flex items-center justify-center rounded-md border border-red-300 px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {isDeletingQr ? (
+                        <ButtonLoadingContent message="Removing QR code..." />
+                      ) : (
+                        "Remove QR Code"
+                      )}
+                    </button>
+                  </div>
                 )}
 
                 {isUploadingQr && (
-                  <p className="mt-2 text-sm text-slate-500">
-                    Uploading QR code...
-                  </p>
+                  <div
+                    role="status"
+                    className="mt-3 inline-flex items-center gap-2 text-sm text-slate-600"
+                  >
+                    <LoaderCircle
+                      size={16}
+                      className="animate-spin"
+                      aria-hidden="true"
+                    />
+                    Uploading payment QR code...
+                  </div>
                 )}
               </div>
             </div>
@@ -878,21 +1014,9 @@ export default function Settings() {
             </div>
           )}
 
-          {paymentSaveSuccess && (
-            <div className="mt-6 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-              {paymentSaveSuccess}
-            </div>
-          )}
-
           {qrError && (
             <div className="mt-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
               {qrError}
-            </div>
-          )}
-
-          {qrSuccess && (
-            <div className="mt-6 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-              {qrSuccess}
             </div>
           )}
 
@@ -901,13 +1025,92 @@ export default function Settings() {
               type="button"
               onClick={handleSavePaymentDetails}
               disabled={isSavingPaymentDetails}
-              className="cursor-pointer rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="cursor-pointer rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50 inline-flex items-center justify-center"
             >
-              {isSavingPaymentDetails ? "Saving..." : "Save Payment Details"}
+              {isSavingPaymentDetails ? (
+                <ButtonLoadingContent message="Saving payment details..." />
+              ) : (
+                "Save Payment Details"
+              )}
             </button>
           </div>
         </section>
       )}
+
+      <ConfirmDialog
+        open={isSignatureDeleteOpen}
+        title="Remove authorized signature?"
+        description={
+          <>
+            <p>
+              Are you sure you want to remove the authorized signature from your
+              company settings?
+            </p>
+
+            <p className="mt-2">
+              It will no longer be available for newly prepared documents that
+              use your current company settings.
+            </p>
+
+            {signatureError && (
+              <p
+                role="alert"
+                className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+              >
+                {signatureError}
+              </p>
+            )}
+          </>
+        }
+        confirmLabel="Remove signature"
+        cancelLabel="Keep signature"
+        tone="danger"
+        isProcessing={isDeletingSignature}
+        onConfirm={handleSignatureDelete}
+        onCancel={() => {
+          if (!isDeletingSignature) {
+            setIsSignatureDeleteOpen(false);
+          }
+        }}
+      />
+
+      <ConfirmDialog
+        open={isQrDeleteOpen}
+        title="Remove payment QR code?"
+        description={
+          <>
+            <p>
+              Are you sure you want to remove the QR code from your company’s
+              payment settings?
+            </p>
+
+            <p className="mt-2">
+              You can upload a new QR code later. Removing this one will stop it
+              from being used when preparing new documents.
+            </p>
+
+            {qrDeleteError && (
+              <p
+                role="alert"
+                className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+              >
+                {qrDeleteError}
+              </p>
+            )}
+          </>
+        }
+        confirmLabel="Remove QR code"
+        cancelLabel="Keep QR code"
+        tone="danger"
+        isProcessing={isDeletingQr}
+        onConfirm={handleQrDelete}
+        onCancel={() => {
+          if (!isDeletingQr) {
+            setIsQrDeleteOpen(false);
+            setQrDeleteError("");
+          }
+        }}
+      />
     </main>
   );
 }

@@ -4,6 +4,7 @@ import { Building2, Eye, EyeOff, Lock, Mail, User } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { register as registerAccount } from "../services/authApi";
 import { gstStates } from "../constants/gstStates";
+import ButtonLoadingContent from "../components/ButtonLoadingContent";
 
 type RegisterForm = {
   fullName: string;
@@ -88,6 +89,9 @@ export default function Register() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (isLoading) return;
+
     setError("");
 
     if (!form.fullName.trim()) {
@@ -231,7 +235,10 @@ export default function Register() {
           </div>
 
           {error && (
-            <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <div
+              role="alert"
+              className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+            >
               {error}
             </div>
           )}
@@ -594,9 +601,13 @@ export default function Register() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full rounded-lg bg-slate-900 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full rounded-lg bg-slate-900 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 inline-flex items-center justify-center"
             >
-              {isLoading ? "Creating account..." : "Create Taxlume account"}
+              {isLoading ? (
+                <ButtonLoadingContent message="Creating account..." />
+              ) : (
+                "Create Taxlume account"
+              )}
             </button>
           </form>
 

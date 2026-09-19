@@ -77,6 +77,10 @@ export async function uploadPaymentQr(
     };
 }
 
+export async function deletePaymentQr(): Promise<void> {
+  await api.delete("/api/company/payment-details/qr");
+}
+
 export async function getPaymentQrDataUrl(): Promise<string | null> {
     try {
         const response = await api.get<Blob>(

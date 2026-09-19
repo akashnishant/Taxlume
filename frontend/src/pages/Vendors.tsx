@@ -13,6 +13,11 @@ import { gstStates } from "../constants/gstStates";
 import MasterListEmptyState from "../components/MasterListEmptyState";
 import { getApiErrorMessage } from "../utils/apiErrorMessage";
 import { validatePartyTaxIds } from "../utils/validatePartyTaxIds";
+import LoadingState from "../components/LoadingState";
+import ButtonLoadingContent from "../components/ButtonLoadingContent";
+import ConfirmDialog from "../components/ConfirmDialog";
+import { useNotification } from "../hooks/useNotifications";
+import MasterFormModalHeader from "../components/MasterFormModalHeader";
 
 type VendorForm = CreateVendorRequest & {
   address: NonNullable<CreateVendorRequest["address"]>;
@@ -48,9 +53,15 @@ function createEmptyVendorForm(): VendorForm {
 }
 
 export default function Vendors() {
+  const notify = useNotification();
+
+  const [statusTarget, setStatusTarget] = useState<Vendor | null>(null);
+  const [isChangingStatus, setIsChangingStatus] = useState(false);
+  const [statusError, setStatusError] = useState("");
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [loadingEditId, setLoadingEditId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [formError, setFormError] = useState("");
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -172,18 +183,39 @@ export default function Vendors() {
         notes: form.notes?.trim() || undefined,
       };
 
+      const wasEditing = Boolean(editingVendorId);
+      const vendorName = vendorData.display_name;
+
       if (editingVendorId) {
         await updateVendor(editingVendorId, vendorData);
       } else {
         await createVendor(vendorData);
       }
 
-      const data = await getVendors();
-      setVendors(data);
+      // The save has succeeded at this point.
+      // Handle a subsequent list-refresh failure separately.
+      let refreshFailed = false;
+
+      try {
+        const data = await getVendors();
+        setVendors(data);
+      } catch {
+        refreshFailed = true;
+      }
 
       setForm(createEmptyVendorForm());
       setEditingVendorId(null);
       setIsAddOpen(false);
+
+      notify({
+        type: refreshFailed ? "warning" : "success",
+        title: refreshFailed
+          ? `Vendor ${wasEditing ? "updated" : "created"}`
+          : `Vendor ${wasEditing ? "updated" : "created"} successfully`,
+        description: refreshFailed
+          ? `"${vendorName}" was saved, but the vendor list could not be refreshed. Reload the page to fetch the latest records.`
+          : `"${vendorName}" has been saved to your records.`,
+      });
     } catch (error) {
       setFormError(
         getApiErrorMessage(
@@ -199,6 +231,9 @@ export default function Vendors() {
   }
 
   async function handleEditVendor(id: string) {
+    if (loadingEditId !== null) return;
+
+    setLoadingEditId(id);
     try {
       setError("");
 
@@ -240,32 +275,82 @@ export default function Vendors() {
       setIsAddOpen(true);
     } catch {
       setError("Unable to load vendor details. Please try again.");
+    } finally {
+      setLoadingEditId(null);
     }
   }
 
-  async function handleToggleVendorStatus(vendor: Vendor) {
-    const nextStatus = vendor.is_active !== 1;
+  function handleToggleVendorStatus(vendor: Vendor) {
+    setStatusError("");
+    setStatusTarget(vendor);
+  }
 
-    const action = nextStatus ? "activate" : "deactivate";
-
-    const confirmed = window.confirm(
-      `Are you sure you want to ${action} "${vendor.display_name}"?`,
-    );
-
-    if (!confirmed) {
+  async function confirmToggleVendorStatus() {
+    if (!statusTarget || isChangingStatus) {
       return;
     }
 
-    try {
-      setError("");
+    const vendor = statusTarget;
+    const nextStatus = vendor.is_active !== 1;
+    const action = nextStatus ? "activate" : "deactivate";
 
+    setIsChangingStatus(true);
+    setStatusError("");
+    setError("");
+
+    try {
       await updateVendorStatus(vendor.id, nextStatus);
 
-      const data = await getVendors();
-      setVendors(data);
+      setVendors((current) =>
+        current.map((item) =>
+          item.id === vendor.id
+            ? { ...item, is_active: nextStatus ? 1 : 0 }
+            : item,
+        ),
+      );
+
+      let refreshFailed = false;
+
+      try {
+        const data = await getVendors();
+        setVendors(data);
+      } catch {
+        refreshFailed = true;
+      }
+
+      setStatusTarget(null);
+
+      notify({
+        type: refreshFailed ? "warning" : "success",
+        title: refreshFailed
+          ? `Vendor ${nextStatus ? "activated" : "deactivated"}`
+          : `Vendor ${nextStatus ? "activated" : "deactivated"} successfully`,
+        description: refreshFailed
+          ? "The status was changed, but the vendor list could not be refreshed. Reload the page to fetch the latest records."
+          : `"${vendor.display_name}" is now ${
+              nextStatus ? "active" : "inactive"
+            }.`,
+      });
     } catch {
-      setError(`Unable to ${action} vendor. Please try again.`);
+      const message = `Unable to ${action} vendor. Please try again.`;
+
+      setStatusError(message);
+
+      notify({
+        type: "error",
+        title: `Could not ${action} vendor`,
+        description: message,
+      });
+    } finally {
+      setIsChangingStatus(false);
     }
+  }
+
+  function closeVendorForm() {
+    if (isSaving) return;
+
+    setIsAddOpen(false);
+    setFormError("");
   }
 
   return (
@@ -318,9 +403,10 @@ export default function Vendors() {
         )}
 
         {isLoading ? (
-          <div className="flex min-h-64 items-center justify-center">
-            <p className="text-sm text-slate-500">Loading vendors...</p>
-          </div>
+          <LoadingState
+            message="Loading vendors..."
+            description="Fetching your vendor records."
+          />
         ) : filteredVendors.length === 0 ? (
           <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
             <h2 className="mt-4 text-sm font-semibold text-slate-900">
@@ -417,9 +503,14 @@ export default function Vendors() {
                         <button
                           type="button"
                           onClick={() => void handleEditVendor(vendor.id)}
-                          className="inline-flex cursor-pointer items-center rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-slate-900"
+                          disabled={loadingEditId !== null}
+                          className="inline-flex cursor-pointer items-center rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-slate-900 inline-flex min-w-16 items-center justify-center disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                          Edit
+                          {loadingEditId === vendor.id ? (
+                            <ButtonLoadingContent message="Loading vendor..." />
+                          ) : (
+                            "Edit"
+                          )}
                         </button>
                         <button
                           type="button"
@@ -445,29 +536,12 @@ export default function Vendors() {
       {isAddOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
           <div className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-              <div>
-                <h3 className="text-lg font-semibold text-slate-900">
-                  {editingVendorId ? "Edit Vendor" : "Add Vendor"}
-                </h3>
-
-                <p className="mt-1 text-sm text-slate-500">
-                  Add vendor and billing information.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setIsAddOpen(false);
-                  setFormError("");
-                }}
-                className="cursor-pointer rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
-                aria-label="Close"
-              >
-                ×
-              </button>
-            </div>
+            <MasterFormModalHeader
+              title={editingVendorId ? "Edit Vendor" : "Add Vendor"}
+              description="Add vendor and billing information."
+              onClose={closeVendorForm}
+              disabled={isSaving}
+            />
 
             {formError && (
               <div className="mx-6 mt-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -855,10 +929,8 @@ export default function Vendors() {
             <div className="flex items-center justify-end gap-3 border-t border-slate-200 px-6 py-4">
               <button
                 type="button"
-                onClick={() => {
-                  setIsAddOpen(false);
-                  setFormError("");
-                }}
+                onClick={closeVendorForm}
+                disabled={isSaving}
                 className="cursor-pointer rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
               >
                 Cancel
@@ -870,16 +942,76 @@ export default function Vendors() {
                 disabled={isSaving}
                 className="cursor-pointer rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isSaving
-                  ? "Saving..."
-                  : editingVendorId
-                    ? "Update Vendor"
-                    : "Save Vendor"}
+                {isSaving ? (
+                  <ButtonLoadingContent
+                    message={
+                      editingVendorId
+                        ? "Updating vendor..."
+                        : "Creating vendor..."
+                    }
+                  />
+                ) : editingVendorId ? (
+                  "Update Vendor"
+                ) : (
+                  "Save Vendor"
+                )}
               </button>
             </div>
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={statusTarget !== null}
+        title={
+          statusTarget?.is_active === 1
+            ? "Deactivate vendor?"
+            : "Activate vendor?"
+        }
+        description={
+          <>
+            <p>
+              Are you sure you want to{" "}
+              {statusTarget?.is_active === 1 ? "deactivate" : "activate"}{" "}
+              <span className="font-semibold text-slate-800">
+                {statusTarget?.display_name}
+              </span>
+              ?
+            </p>
+
+            {statusTarget?.is_active === 1 && (
+              <p className="mt-2">
+                This vendor will no longer appear in active vendor selections.
+                You can activate them again later.
+              </p>
+            )}
+
+            {statusError && (
+              <p
+                role="alert"
+                className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+              >
+                {statusError}
+              </p>
+            )}
+          </>
+        }
+        confirmLabel={
+          statusTarget?.is_active === 1
+            ? "Deactivate vendor"
+            : "Activate vendor"
+        }
+        cancelLabel="Keep current status"
+        tone={statusTarget?.is_active === 1 ? "warning" : "default"}
+        isProcessing={isChangingStatus}
+        onConfirm={confirmToggleVendorStatus}
+        onCancel={() => {
+          if (!isChangingStatus) {
+            setStatusTarget(null);
+            setStatusError("");
+          }
+        }}
+      />
     </main>
   );
 }

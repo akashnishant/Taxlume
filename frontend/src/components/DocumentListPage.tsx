@@ -10,6 +10,8 @@ import {
   formatMoneyPaise,
 } from "../utils/documentDisplay";
 
+import LoadingState from "./LoadingState";
+
 type DocumentListPageProps = {
   title: string;
   description: string;
@@ -188,11 +190,11 @@ export default function DocumentListPage({
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="px-6 py-16 text-center text-sm text-slate-500"
-                  >
-                    Loading documents...
+                  <td colSpan={6}>
+                    <LoadingState
+                      message={`Loading ${title.toLowerCase()}...`}
+                      description="Fetching your documents and their latest statuses."
+                    />
                   </td>
                 </tr>
               ) : error ? (

@@ -22,6 +22,9 @@ import {
   getQuantityMilli,
   getTaxableAmountPaise,
 } from "../utils/documentCalculations";
+import LoadingState from "../components/LoadingState";
+import { useNotification } from "../hooks/useNotifications";
+import ButtonLoadingContent from "../components/ButtonLoadingContent";
 
 type EditableSaleItem = {
   id: string;
@@ -39,6 +42,7 @@ type EditableSaleItem = {
 
 export default function SalesDocumentEdit() {
   const navigate = useNavigate();
+  const notify = useNotification();
   const { id } = useParams();
   const location = useLocation();
 
@@ -331,13 +335,31 @@ export default function SalesDocumentEdit() {
     hasTaxLocation && isInterState ? liveTotals.gstPaise : 0;
 
   async function handleSave() {
-    if (
-      !id ||
-      !document ||
-      !documentDate ||
-      !customerId ||
-      !placeOfSupplyStateCode
-    ) {
+    if (isSaving) return;
+
+    setSaveError("");
+
+    if (!id || !document || document.status !== "DRAFT") {
+      setSaveError("Only draft documents can be edited.");
+      return;
+    }
+
+    if (!documentDate) {
+      setSaveError("Document Date is required.");
+      return;
+    }
+
+    if (!customerId) {
+      setSaveError(
+        isPurchaseRoute
+          ? "Please select a vendor."
+          : "Please select a customer.",
+      );
+      return;
+    }
+
+    if (!placeOfSupplyStateCode) {
+      setSaveError("Please select a Place of Supply.");
       return;
     }
 
@@ -404,7 +426,6 @@ export default function SalesDocumentEdit() {
     });
 
     setIsSaving(true);
-    setSaveError("");
 
     try {
       await updateDocument(id, {
@@ -417,6 +438,14 @@ export default function SalesDocumentEdit() {
 
         terms_and_conditions: termsAndConditions.trim() || null,
       });
+
+      notify({
+        type: "success",
+        title: "Draft updated successfully",
+        description: `${document.document_number} has been saved. You can review it before issuing.`,
+      });
+
+      navigate(`${basePath}/${id}`);
 
       navigate(`${basePath}/${id}`);
     } catch (error) {
@@ -443,7 +472,10 @@ export default function SalesDocumentEdit() {
   if (isLoading) {
     return (
       <main className="mx-auto max-w-7xl px-6 py-8">
-        <p className="text-sm text-slate-500">Loading draft...</p>
+        <LoadingState
+          message="Loading draft..."
+          description="Fetching the document details for editing."
+        />
       </main>
     );
   }
@@ -472,6 +504,7 @@ export default function SalesDocumentEdit() {
       <button
         type="button"
         onClick={() => navigate(`${basePath}/${document.id}`)}
+        disabled={isSaving}
         className="mb-4 inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-slate-900"
       >
         <ArrowLeft size={16} />
@@ -958,15 +991,14 @@ export default function SalesDocumentEdit() {
           <button
             type="button"
             onClick={handleSave}
-            disabled={
-              isSaving ||
-              !documentDate ||
-              !customerId ||
-              !placeOfSupplyStateCode
-            }
+            disabled={isSaving}
             className="cursor-pointer rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {isSaving ? "Saving..." : "Save Changes"}
+            {isSaving ? (
+              <ButtonLoadingContent message="Saving changes..." />
+            ) : (
+              "Save Changes"
+            )}
           </button>
         </div>
       </div>

@@ -13,6 +13,10 @@ import {
   getPaymentDetails,
   getPaymentQrDataUrl,
 } from "../services/paymentDetailsApi";
+import LoadingState from "../components/LoadingState";
+import ButtonLoadingContent from "../components/ButtonLoadingContent";
+import ConfirmDialog from "../components/ConfirmDialog";
+import { useNotification } from "../hooks/useNotifications";
 
 function formatDocumentType(documentType: string): string {
   switch (documentType) {
@@ -50,6 +54,7 @@ function formatMoney(valuePaise: number): string {
 
 export default function SalesDocumentDetails() {
   const navigate = useNavigate();
+  const notify = useNotification();
   const { id } = useParams();
   const location = useLocation();
 
@@ -77,6 +82,10 @@ export default function SalesDocumentDetails() {
 
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
+  const [pendingAction, setPendingAction] = useState<"ISSUE" | "CANCEL" | null>(
+    null,
+  );
+
   useEffect(() => {
     async function loadDocument() {
       if (!id) {
@@ -102,16 +111,56 @@ export default function SalesDocumentDetails() {
     void loadDocument();
   }, [id]);
 
+  function requestIssue() {
+    if (
+      !document ||
+      document.status !== "DRAFT" ||
+      isIssuing ||
+      isCancelling ||
+      isGeneratingPdf
+    ) {
+      return;
+    }
+
+    setActionError("");
+    setPendingAction("ISSUE");
+  }
+
+  function requestCancel() {
+    if (
+      !document ||
+      document.status !== "ISSUED" ||
+      isIssuing ||
+      isCancelling ||
+      isGeneratingPdf
+    ) {
+      return;
+    }
+
+    setActionError("");
+    setPendingAction("CANCEL");
+  }
+
+  function closeActionDialog() {
+    if (isIssuing || isCancelling) return;
+
+    setPendingAction(null);
+    setActionError("");
+  }
+
   async function handleIssue() {
     if (!document || document.status !== "DRAFT") {
       return;
     }
 
-    const confirmed = window.confirm(
-      `Issue ${document.document_number}?\n\nOnce issued, this document can no longer be edited.`,
-    );
-
-    if (!confirmed) {
+    if (
+      !document ||
+      document.status !== "DRAFT" ||
+      pendingAction !== "ISSUE" ||
+      isIssuing ||
+      isCancelling ||
+      isGeneratingPdf
+    ) {
       return;
     }
 
@@ -129,6 +178,14 @@ export default function SalesDocumentDetails() {
             }
           : currentDocument,
       );
+
+      setPendingAction(null);
+
+      notify({
+        type: "success",
+        title: "Document issued successfully",
+        description: `${document.document_number} has been issued and can no longer be edited.`,
+      });
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const responseData = error.response?.data as
@@ -160,11 +217,14 @@ export default function SalesDocumentDetails() {
       return;
     }
 
-    const confirmed = window.confirm(
-      `Cancel ${document.document_number}?\n\nThis action will mark the document as cancelled.`,
-    );
-
-    if (!confirmed) {
+    if (
+      !document ||
+      document.status !== "ISSUED" ||
+      pendingAction !== "CANCEL" ||
+      isIssuing ||
+      isCancelling ||
+      isGeneratingPdf
+    ) {
       return;
     }
 
@@ -182,6 +242,14 @@ export default function SalesDocumentDetails() {
             }
           : currentDocument,
       );
+
+      setPendingAction(null);
+
+      notify({
+        type: "success",
+        title: "Document cancelled successfully",
+        description: `${document.document_number} has been marked as cancelled.`,
+      });
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const responseData = error.response?.data as
@@ -209,7 +277,7 @@ export default function SalesDocumentDetails() {
   }
 
   async function handleDownloadPdf() {
-    if (!document) {
+    if (!document || isGeneratingPdf || isIssuing || isCancelling) {
       return;
     }
 
@@ -347,7 +415,10 @@ export default function SalesDocumentDetails() {
   if (isLoading) {
     return (
       <main className="mx-auto max-w-7xl px-6 py-8">
-        <p className="text-sm text-slate-500">Loading {documentLabel}...</p>
+        <LoadingState
+          message={`Loading ${documentLabel}...`}
+          description="Fetching the document details and latest status."
+        />
       </main>
     );
   }
@@ -447,9 +518,14 @@ export default function SalesDocumentDetails() {
             disabled={isGeneratingPdf || isIssuing || isCancelling}
             className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <Download size={16} />
-
-            {isGeneratingPdf ? "Generating..." : "Download PDF"}
+            {isGeneratingPdf ? (
+              <ButtonLoadingContent message="Generating PDF..." />
+            ) : (
+              <>
+                <Download size={16} />
+                Download PDF
+              </>
+            )}
           </button>
 
           {document.status === "DRAFT" && (
@@ -465,11 +541,15 @@ export default function SalesDocumentDetails() {
 
               <button
                 type="button"
-                onClick={handleIssue}
-                disabled={isIssuing}
+                onClick={requestIssue}
+                disabled={isIssuing || isCancelling || isGeneratingPdf}
                 className="cursor-pointer rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {isIssuing ? "Issuing..." : "Issue Document"}
+                {isIssuing ? (
+                  <ButtonLoadingContent message="Issuing document..." />
+                ) : (
+                  "Issue Document"
+                )}
               </button>
             </>
           )}
@@ -477,11 +557,15 @@ export default function SalesDocumentDetails() {
           {document.status === "ISSUED" && (
             <button
               type="button"
-              onClick={handleCancel}
-              disabled={isCancelling}
+              onClick={requestCancel}
+              disabled={isIssuing || isCancelling || isGeneratingPdf}
               className="cursor-pointer rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {isCancelling ? "Cancelling..." : "Cancel Document"}
+              {isCancelling ? (
+                <ButtonLoadingContent message="Cancelling document..." />
+              ) : (
+                "Cancel Document"
+              )}
             </button>
           )}
         </div>
@@ -748,6 +832,53 @@ export default function SalesDocumentDetails() {
           </div>
         </section>
       </div>
+
+      <ConfirmDialog
+        open={pendingAction !== null}
+        title={
+          pendingAction === "ISSUE" ? "Issue document?" : "Cancel document?"
+        }
+        description={
+          <>
+            <p>
+              {pendingAction === "ISSUE"
+                ? `Are you sure you want to issue ${document.document_number}?`
+                : `Are you sure you want to cancel ${document.document_number}?`}
+            </p>
+
+            <p className="mt-2">
+              {pendingAction === "ISSUE"
+                ? "Once issued, this document can no longer be edited."
+                : "This action will mark the document as cancelled."}
+            </p>
+
+            {actionError && (
+              <p
+                role="alert"
+                className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+              >
+                {actionError}
+              </p>
+            )}
+          </>
+        }
+        confirmLabel={
+          pendingAction === "ISSUE" ? "Issue document" : "Cancel document"
+        }
+        cancelLabel="Keep current status"
+        tone={pendingAction === "CANCEL" ? "danger" : "default"}
+        isProcessing={isIssuing || isCancelling}
+        onConfirm={() => {
+          if (pendingAction === "ISSUE") {
+            return handleIssue();
+          }
+
+          if (pendingAction === "CANCEL") {
+            return handleCancel();
+          }
+        }}
+        onCancel={closeActionDialog}
+      />
     </main>
   );
 }

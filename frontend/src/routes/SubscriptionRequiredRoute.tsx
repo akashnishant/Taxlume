@@ -38,7 +38,7 @@ export default function SubscriptionRequiredRoute() {
     };
   }, [retryKey]);
 
-  if (status === "LOADING") {
+  if (state === "LOADING") {
     return <SubscriptionCheckingScreen />;
   }
 

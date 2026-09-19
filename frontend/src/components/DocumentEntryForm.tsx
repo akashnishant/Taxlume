@@ -24,12 +24,17 @@ import { formatMoneyPaise } from "../utils/documentDisplay";
 
 import { getDocumentProductRatePaise } from "../utils/documentProductPrice";
 
+import ButtonLoadingContent from "./ButtonLoadingContent";
+import { useNotification } from "../hooks/useNotifications";
+
 type DocumentEntryFormProps = {
   config: DocumentFormConfig;
 };
 
 export default function DocumentEntryForm({ config }: DocumentEntryFormProps) {
   const navigate = useNavigate();
+
+  const notify = useNotification();
 
   const [company, setCompany] = useState<Company | null>(null);
 
@@ -98,20 +103,6 @@ export default function DocumentEntryForm({ config }: DocumentEntryFormProps) {
 
     void loadProducts();
   }, []);
-
-  useEffect(() => {
-    if (!saveError) {
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      setSaveError("");
-    }, 5000);
-
-    return () => {
-      window.clearTimeout(timer);
-    };
-  }, [saveError]);
 
   const selectedParty =
     config.parties.find((party) => party.id === partyId) ?? null;
@@ -226,6 +217,8 @@ export default function DocumentEntryForm({ config }: DocumentEntryFormProps) {
   }
 
   async function handleSaveDraft() {
+    if (isSaving) return;
+
     setSaveError("");
 
     if (!documentDate) {
@@ -310,6 +303,13 @@ export default function DocumentEntryForm({ config }: DocumentEntryFormProps) {
         place_of_supply_state_code: placeOfSupplyStateCode,
         currency_code: "INR",
         items: documentItems,
+      });
+
+      notify({
+        type: "success",
+        title: "Draft saved successfully",
+        description:
+          "Your document has been saved as a draft. You can review or edit it before issuing.",
       });
 
       navigate(config.saveRedirectPath);
@@ -758,7 +758,8 @@ export default function DocumentEntryForm({ config }: DocumentEntryFormProps) {
           <button
             type="button"
             onClick={() => navigate(config.saveRedirectPath)}
-            className="inline-flex cursor-pointer items-center justify-center rounded-md border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            disabled={isSaving}
+            className="inline-flex cursor-pointer items-center justify-center rounded-md border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
           >
             Cancel
           </button>
@@ -769,7 +770,11 @@ export default function DocumentEntryForm({ config }: DocumentEntryFormProps) {
             disabled={isSaving}
             className="inline-flex cursor-pointer items-center justify-center rounded-md bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isSaving ? "Saving..." : "Save Draft"}
+            {isSaving ? (
+              <ButtonLoadingContent message="Saving draft..." />
+            ) : (
+              "Save Draft"
+            )}
           </button>
         </div>
       </div>

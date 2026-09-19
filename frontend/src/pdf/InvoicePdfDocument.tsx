@@ -995,17 +995,13 @@ export default function InvoicePdfDocument({
                 )}
               </View>
 
-              <View style={styles.qrBlock}>
-                {showPaymentQr && paymentQrDataUrl ? (
-                  <>
-                    <Image src={paymentQrDataUrl} style={styles.qrImage} />
+              {showPaymentQr && paymentQrDataUrl && (
+                <View style={styles.qrBlock}>
+                  <Image src={paymentQrDataUrl} style={styles.qrImage} />
 
-                    <Text style={styles.qrLabel}>Scan to Pay</Text>
-                  </>
-                ) : (
-                  <Text style={styles.qrLabel}>Payment QR</Text>
-                )}
-              </View>
+                  <Text style={styles.qrLabel}>Scan to Pay</Text>
+                </View>
+              )}
             </>
           )}
 

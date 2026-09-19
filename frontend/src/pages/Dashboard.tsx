@@ -3,7 +3,6 @@ import {
   ArrowDownLeft,
   ArrowUpRight,
   FileText,
-  Loader2,
   ReceiptIndianRupee,
   Users,
   Wallet,
@@ -14,6 +13,7 @@ import {
   type DashboardData,
   type DashboardRecentDocument,
 } from "../services/dashboardApi";
+import LoadingState from "../components/LoadingState";
 
 function formatMoney(amountPaise: number, currencyCode: string): string {
   return new Intl.NumberFormat("en-IN", {
@@ -177,15 +177,12 @@ export default function Dashboard() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="text-center">
-          <Loader2 size={30} className="mx-auto animate-spin text-slate-500" />
-
-          <p className="mt-3 text-sm text-slate-500">
-            Loading your dashboard...
-          </p>
-        </div>
-      </div>
+      <main className="mx-auto max-w-7xl px-6 py-8">
+        <LoadingState
+          message="Loading your dashboard..."
+          description="Retrieving your latest sales, purchases, and business summary."
+        />
+      </main>
     );
   }
 

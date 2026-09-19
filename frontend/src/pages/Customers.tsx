@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Search, Users, X } from "lucide-react";
+import { Plus, Search, Users } from "lucide-react";
 import {
   createCustomer,
   getCustomer,
@@ -13,11 +13,18 @@ import { gstStates } from "../constants/gstStates";
 import MasterListEmptyState from "../components/MasterListEmptyState";
 import { getApiErrorMessage } from "../utils/apiErrorMessage";
 import { validatePartyTaxIds } from "../utils/validatePartyTaxIds";
+import LoadingState from "../components/LoadingState";
+import ButtonLoadingContent from "../components/ButtonLoadingContent";
+import { useNotification } from "../hooks/useNotifications";
+import ConfirmDialog from "../components/ConfirmDialog";
+import MasterFormModalHeader from "../components/MasterFormModalHeader";
 
 export default function Customers() {
+  const notify = useNotification();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [loadingEditId, setLoadingEditId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [formError, setFormError] = useState("");
 
@@ -27,6 +34,10 @@ export default function Customers() {
   );
 
   const [isSaving, setIsSaving] = useState(false);
+
+  const [statusTarget, setStatusTarget] = useState<Customer | null>(null);
+  const [isChangingStatus, setIsChangingStatus] = useState(false);
+  const [statusError, setStatusError] = useState("");
 
   function createEmptyCustomerForm(): CreateCustomerRequest {
     return {
@@ -92,6 +103,9 @@ export default function Customers() {
   });
 
   async function handleEditCustomer(id: string) {
+    if (loadingEditId !== null) return;
+
+    setLoadingEditId(id);
     try {
       setError("");
 
@@ -130,32 +144,84 @@ export default function Customers() {
       setIsAddOpen(true);
     } catch {
       setError("Unable to load customer details. Please try again.");
+    } finally {
+      setLoadingEditId(null);
     }
   }
 
-  async function handleToggleCustomerStatus(customer: Customer) {
-    const nextStatus = customer.is_active !== 1;
+  function handleToggleCustomerStatus(customer: Customer) {
+    setStatusError("");
+    setStatusTarget(customer);
+  }
 
-    const action = nextStatus ? "activate" : "deactivate";
-
-    const confirmed = window.confirm(
-      `Are you sure you want to ${action} "${customer.display_name}"?`,
-    );
-
-    if (!confirmed) {
+  async function confirmToggleCustomerStatus() {
+    if (!statusTarget || isChangingStatus) {
       return;
     }
 
-    try {
-      setError("");
+    const customer = statusTarget;
+    const nextStatus = customer.is_active !== 1;
+    const action = nextStatus ? "activate" : "deactivate";
 
+    setIsChangingStatus(true);
+    setStatusError("");
+
+    try {
+      // First, perform the actual status change.
       await updateCustomerStatus(customer.id, nextStatus);
 
-      const data = await getCustomers();
+      // Immediately reflect the successful change in the local list.
+      setCustomers((current) =>
+        current.map((item) =>
+          item.id === customer.id
+            ? { ...item, is_active: nextStatus ? 1 : 0 }
+            : item,
+        ),
+      );
 
-      setCustomers(data);
+      // Refresh the list without treating a refresh failure as
+      // a failure of the status change that already succeeded.
+      let refreshFailed = false;
+
+      try {
+        const data = await getCustomers();
+        setCustomers(data);
+      } catch {
+        refreshFailed = true;
+      }
+
+      setStatusTarget(null);
+
+      if (refreshFailed) {
+        notify({
+          type: "warning",
+          title: `Customer ${nextStatus ? "activated" : "deactivated"}`,
+          description:
+            "The status was changed, but the customer list could not be refreshed. Reload the page to fetch the latest records.",
+        });
+      } else {
+        notify({
+          type: "success",
+          title: `Customer ${nextStatus ? "activated" : "deactivated"} successfully`,
+          description: `"${customer.display_name}" is now ${
+            nextStatus ? "active" : "inactive"
+          }.`,
+        });
+      }
     } catch {
-      setError(`Unable to ${action} customer. Please try again.`);
+      const message = `Unable to ${action} customer. Please try again.`;
+
+      // Keep the dialog open so the user can see the error
+      // and decide whether to retry or cancel.
+      setStatusError(message);
+
+      notify({
+        type: "error",
+        title: `Could not ${action} customer`,
+        description: message,
+      });
+    } finally {
+      setIsChangingStatus(false);
     }
   }
 
@@ -238,6 +304,15 @@ export default function Customers() {
       const data = await getCustomers();
 
       setCustomers(data);
+      notify({
+        type: "success",
+        title: editingCustomerId
+          ? "Customer updated successfully"
+          : "Customer created successfully",
+        description: editingCustomerId
+          ? "The customer details have been saved."
+          : "The new customer has been added to your records.",
+      });
       setIsAddOpen(false);
       setEditingCustomerId(null);
       setForm(createEmptyCustomerForm());
@@ -253,6 +328,13 @@ export default function Customers() {
     } finally {
       setIsSaving(false);
     }
+  }
+
+  function closeCustomerForm() {
+    if (isSaving) return;
+
+    setIsAddOpen(false);
+    setFormError("");
   }
 
   return (
@@ -301,9 +383,10 @@ export default function Customers() {
         </div>
 
         {isLoading ? (
-          <div className="px-6 py-16 text-center">
-            <p className="text-sm text-slate-500">Loading customers...</p>
-          </div>
+          <LoadingState
+            message="Loading customers..."
+            description="Fetching your customer records."
+          />
         ) : error ? (
           <div className="px-6 py-16 text-center">
             <p className="text-sm text-red-600">{error}</p>
@@ -402,9 +485,14 @@ export default function Customers() {
                         <button
                           type="button"
                           onClick={() => handleEditCustomer(customer.id)}
-                          className="inline-flex cursor-pointer items-center rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-slate-900"
+                          disabled={loadingEditId !== null}
+                          className="inline-flex cursor-pointer items-center rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-slate-900 inline-flex min-w-16 items-center justify-center disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                          Edit
+                          {loadingEditId === customer.id ? (
+                            <ButtonLoadingContent message="Loading customer..." />
+                          ) : (
+                            "Edit"
+                          )}
                         </button>
 
                         <button
@@ -431,29 +519,12 @@ export default function Customers() {
       {isAddOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
           <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-xl bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-              <div>
-                <h3 className="text-lg font-semibold text-slate-900">
-                  {editingCustomerId ? "Edit Customer" : "Add Customer"}
-                </h3>
-
-                <p className="mt-1 text-sm text-slate-500">
-                  Enter the customer's billing information.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setIsAddOpen(false);
-                  setFormError("");
-                }}
-                className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
-                aria-label="Close"
-              >
-                <X size={20} />
-              </button>
-            </div>
+            <MasterFormModalHeader
+              title={editingCustomerId ? "Edit Customer" : "Add Customer"}
+              description="Enter the customer's billing information."
+              onClose={closeCustomerForm}
+              disabled={isSaving}
+            />
 
             {formError && (
               <div className="mx-6 mt-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -876,10 +947,8 @@ export default function Customers() {
             <div className="flex justify-end gap-3 border-t border-slate-200 px-6 py-4">
               <button
                 type="button"
-                onClick={() => {
-                  setIsAddOpen(false);
-                  setFormError("");
-                }}
+                onClick={closeCustomerForm}
+                disabled={isSaving}
                 className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
               >
                 Cancel
@@ -891,16 +960,76 @@ export default function Customers() {
                 disabled={isSaving}
                 className="rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isSaving
-                  ? "Saving..."
-                  : editingCustomerId
-                    ? "Update Customer"
-                    : "Save Customer"}
+                {isSaving ? (
+                  <ButtonLoadingContent
+                    message={
+                      editingCustomerId
+                        ? "Updating customer..."
+                        : "Creating customer..."
+                    }
+                  />
+                ) : editingCustomerId ? (
+                  "Update Customer"
+                ) : (
+                  "Save Customer"
+                )}
               </button>
             </div>
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={statusTarget !== null}
+        title={
+          statusTarget?.is_active === 1
+            ? "Deactivate customer?"
+            : "Activate customer?"
+        }
+        description={
+          <>
+            <p>
+              Are you sure you want to{" "}
+              {statusTarget?.is_active === 1 ? "deactivate" : "activate"}{" "}
+              <span className="font-semibold text-slate-800">
+                {statusTarget?.display_name}
+              </span>
+              ?
+            </p>
+
+            {statusTarget?.is_active === 1 && (
+              <p className="mt-2">
+                This customer will no longer appear in active customer
+                selections. You can activate them again later.
+              </p>
+            )}
+
+            {statusError && (
+              <p
+                role="alert"
+                className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+              >
+                {statusError}
+              </p>
+            )}
+          </>
+        }
+        confirmLabel={
+          statusTarget?.is_active === 1
+            ? "Deactivate customer"
+            : "Activate customer"
+        }
+        cancelLabel="Keep current status"
+        tone={statusTarget?.is_active === 1 ? "warning" : "default"}
+        isProcessing={isChangingStatus}
+        onConfirm={confirmToggleCustomerStatus}
+        onCancel={() => {
+          if (!isChangingStatus) {
+            setStatusTarget(null);
+            setStatusError("");
+          }
+        }}
+      />
     </main>
   );
 }

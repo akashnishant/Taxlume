@@ -1,1 +1,39 @@
 @import "tailwindcss";
+
+/* Interactive controls */
+:is(
+    button,
+    a[href],
+    select,
+    summary,
+    [role="button"],
+    [role="link"],
+    input[type="button"],
+    input[type="submit"],
+    input[type="reset"]
+  ):not(:disabled):not([aria-disabled="true"]) {
+  cursor: pointer;
+}
+
+/* Disabled controls must not appear clickable */
+:is(
+  button,
+  select,
+  [role="button"],
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"]
+):disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+@keyframes notification-progress {
+  from {
+    transform: scaleX(1);
+  }
+
+  to {
+    transform: scaleX(0);
+  }
+}

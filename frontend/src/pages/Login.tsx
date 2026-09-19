@@ -1,13 +1,14 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { login } from "../services/authApi";
 import { setAuthToken } from "../services/authStorage";
 import { setSession } from "../services/sessionStorage";
-import { getCurrentSubscription } from "../services/subscriptionApi";
+import ButtonLoadingContent from "../components/ButtonLoadingContent";
 
 export default function Login() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -16,6 +17,8 @@ export default function Login() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (isLoading) return;
 
     setError("");
 
@@ -39,11 +42,7 @@ export default function Login() {
         company: response.company,
       });
 
-      const subscription = await getCurrentSubscription();
-
-      window.location.href = subscription.has_active_subscription
-        ? "/"
-        : "/subscribe";
+      navigate("/", { replace: true });
     } catch (error: any) {
       const message =
         error?.response?.data?.message ||
@@ -82,7 +81,10 @@ export default function Login() {
           </div>
 
           {error && (
-            <div className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <div
+              role="alert"
+              className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+            >
               {error}
             </div>
           )}
@@ -152,9 +154,13 @@ export default function Login() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full rounded-lg bg-slate-900 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full rounded-lg bg-slate-900 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 inline-flex items-center justify-center"
             >
-              {isLoading ? "Signing in..." : "Sign in"}
+              {isLoading ? (
+                <ButtonLoadingContent message="Signing in..." />
+              ) : (
+                "Sign in"
+              )}
             </button>
           </form>
           <p className="mt-6 text-center text-sm text-slate-500">

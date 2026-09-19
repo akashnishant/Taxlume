@@ -10,6 +10,11 @@ import {
   type Product,
 } from "../services/productApi";
 import MasterListEmptyState from "../components/MasterListEmptyState";
+import LoadingState from "../components/LoadingState";
+import ButtonLoadingContent from "../components/ButtonLoadingContent";
+import ConfirmDialog from "../components/ConfirmDialog";
+import { useNotification } from "../hooks/useNotifications";
+import MasterFormModalHeader from "../components/MasterFormModalHeader";
 
 function formatRupees(paise: number): string {
   return `₹${(paise / 100).toFixed(2)}`;
@@ -37,7 +42,7 @@ function createEmptyProductForm(): ProductForm {
     description: "",
     sku: "",
     hsn_sac: "",
-    unit: "NOS",
+    unit: "",
     selling_price_paise: 0,
     purchase_price_paise: 0,
     gst_rate_bps: 0,
@@ -48,11 +53,18 @@ function createEmptyProductForm(): ProductForm {
 }
 
 export default function Products() {
+  const notify = useNotification();
+
+  const [statusTarget, setStatusTarget] = useState<Product | null>(null);
+  const [isChangingStatus, setIsChangingStatus] = useState(false);
+  const [statusError, setStatusError] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
 
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [loadingEditId, setLoadingEditId] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [formError, setFormError] = useState("");
 
   const [isAddOpen, setIsAddOpen] = useState(false);
 
@@ -101,17 +113,19 @@ export default function Products() {
   }, [products, search]);
 
   async function handleCreateProduct() {
+    if (isSaving) return;
+
+    setFormError("");
     if (!form.name.trim()) {
-      setError("Product or service name is required.");
+      setFormError("Product or service name is required.");
       return;
     }
 
     if (!form.unit.trim()) {
-      setError("Unit is required.");
+      setFormError("Unit is required.");
       return;
     }
 
-    setError("");
     setIsSaving(true);
 
     try {
@@ -130,19 +144,41 @@ export default function Products() {
         track_inventory: form.track_inventory,
       };
 
+      const wasEditing = Boolean(editingProductId);
+      const productName = payload.name;
+
       if (editingProductId) {
         await updateProduct(editingProductId, payload);
       } else {
         await createProduct(payload);
       }
 
+      // The create/update request succeeded.
+      // Do not treat a later refresh failure as a save failure.
+      let refreshFailed = false;
+
+      try {
+        const data = await getProducts();
+        setProducts(data);
+      } catch {
+        refreshFailed = true;
+      }
+
       setIsAddOpen(false);
       setEditingProductId(null);
       setForm(createEmptyProductForm());
 
-      await loadProducts();
+      notify({
+        type: refreshFailed ? "warning" : "success",
+        title: refreshFailed
+          ? `Product ${wasEditing ? "updated" : "created"}`
+          : `Product ${wasEditing ? "updated" : "created"} successfully`,
+        description: refreshFailed
+          ? `"${productName}" was saved, but the product list could not be refreshed. Reload the page to fetch the latest records.`
+          : `"${productName}" has been saved to your records.`,
+      });
     } catch {
-      setError(
+      setFormError(
         editingProductId
           ? "Unable to update product. Please try again."
           : "Unable to create product. Please try again.",
@@ -153,6 +189,9 @@ export default function Products() {
   }
 
   async function handleEditProduct(id: string) {
+    if (loadingEditId !== null) return;
+
+    setLoadingEditId(id);
     setError("");
 
     try {
@@ -173,35 +212,85 @@ export default function Products() {
         track_inventory: Boolean(product.track_inventory),
       });
 
+      setFormError("");
       setEditingProductId(product.id);
       setIsAddOpen(true);
     } catch {
       setError("Unable to load product. Please try again.");
+    } finally {
+      setLoadingEditId(null);
     }
   }
 
-  async function handleToggleProductStatus(product: Product) {
-    const nextStatus = product.is_active === 1 ? false : true;
+  function handleToggleProductStatus(product: Product) {
+    setStatusError("");
+    setStatusTarget(product);
+  }
 
-    const action = nextStatus ? "activate" : "deactivate";
-
-    const confirmed = window.confirm(
-      `Are you sure you want to ${action} "${product.name}"?`,
-    );
-
-    if (!confirmed) {
+  async function confirmToggleProductStatus() {
+    if (!statusTarget || isChangingStatus) {
       return;
     }
 
+    const product = statusTarget;
+    const nextStatus = product.is_active !== 1;
+    const action = nextStatus ? "activate" : "deactivate";
+
+    setIsChangingStatus(true);
+    setStatusError("");
     setError("");
 
     try {
       await updateProductStatus(product.id, nextStatus);
 
-      await loadProducts();
+      setProducts((current) =>
+        current.map((item) =>
+          item.id === product.id
+            ? { ...item, is_active: nextStatus ? 1 : 0 }
+            : item,
+        ),
+      );
+
+      let refreshFailed = false;
+
+      try {
+        const data = await getProducts();
+        setProducts(data);
+      } catch {
+        refreshFailed = true;
+      }
+
+      setStatusTarget(null);
+
+      notify({
+        type: refreshFailed ? "warning" : "success",
+        title: refreshFailed
+          ? `Product ${nextStatus ? "activated" : "deactivated"}`
+          : `Product ${nextStatus ? "activated" : "deactivated"} successfully`,
+        description: refreshFailed
+          ? "The status was changed, but the product list could not be refreshed. Reload the page to fetch the latest records."
+          : `"${product.name}" is now ${nextStatus ? "active" : "inactive"}.`,
+      });
     } catch {
-      setError(`Unable to ${action} product. Please try again.`);
+      const message = `Unable to ${action} product. Please try again.`;
+
+      setStatusError(message);
+
+      notify({
+        type: "error",
+        title: `Could not ${action} product`,
+        description: message,
+      });
+    } finally {
+      setIsChangingStatus(false);
     }
+  }
+
+  function closeProductForm() {
+    if (isSaving) return;
+
+    setIsAddOpen(false);
+    setFormError("");
   }
 
   return (
@@ -251,11 +340,10 @@ export default function Products() {
         </div>
 
         {isLoading ? (
-          <div className="px-6 py-16 text-center">
-            <p className="text-sm text-slate-500">
-              Loading products and services...
-            </p>
-          </div>
+          <LoadingState
+            message="Loading products and services..."
+            description="Fetching your product and service catalogue."
+          />
         ) : error ? (
           <div className="px-6 py-16 text-center">
             <p className="text-sm text-red-600">{error}</p>
@@ -370,10 +458,15 @@ export default function Products() {
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
-                          className="inline-flex cursor-pointer items-center rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-slate-900"
+                          className="inline-flex cursor-pointer items-center rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-slate-900 inline-flex min-w-16 items-center justify-center disabled:cursor-not-allowed disabled:opacity-60"
                           onClick={() => void handleEditProduct(product.id)}
+                          disabled={loadingEditId !== null}
                         >
-                          Edit
+                          {loadingEditId === product.id ? (
+                            <ButtonLoadingContent message="Loading product..." />
+                          ) : (
+                            "Edit"
+                          )}
                         </button>
 
                         <button
@@ -401,29 +494,28 @@ export default function Products() {
 
       {isAddOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-2xl rounded-xl bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-              <div>
-                <h2 className="text-lg font-semibold text-slate-900">
-                  {editingProductId ? "Edit Product" : "Add Product"}
-                </h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  {editingProductId
-                    ? "Update the product or service details."
-                    : "Add a product or service to your catalog."}
-                </p>
-              </div>
+          <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl bg-white shadow-xl">
+            <MasterFormModalHeader
+              title={editingProductId ? "Edit Product" : "Add Product"}
+              description={
+                editingProductId
+                  ? "Update the product or service details."
+                  : "Add a product or service to your catalog."
+              }
+              onClose={closeProductForm}
+              disabled={isSaving}
+            />
 
-              <button
-                type="button"
-                onClick={() => setIsAddOpen(false)}
-                className="rounded-lg px-3 py-2 text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-700"
-              >
-                Close
-              </button>
-            </div>
+            <div className="min-h-0 overflow-y-auto p-6">
+              {formError && (
+                <div
+                  role="alert"
+                  className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+                >
+                  {formError}
+                </div>
+              )}
 
-            <div className="p-6">
               <div className="grid gap-5 sm:grid-cols-2">
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-slate-700">
@@ -688,7 +780,8 @@ export default function Products() {
               <div className="mt-6 flex items-center justify-end gap-3 border-t border-slate-200 pt-5">
                 <button
                   type="button"
-                  onClick={() => setIsAddOpen(false)}
+                  onClick={closeProductForm}
+                  disabled={isSaving}
                   className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                 >
                   Cancel
@@ -700,19 +793,77 @@ export default function Products() {
                   disabled={isSaving}
                   className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {isSaving
-                    ? editingProductId
-                      ? "Updating..."
-                      : "Creating..."
-                    : editingProductId
-                      ? "Update Product"
-                      : "Create Product"}
+                  {isSaving ? (
+                    <ButtonLoadingContent
+                      message={
+                        editingProductId
+                          ? "Updating product..."
+                          : "Creating product..."
+                      }
+                    />
+                  ) : editingProductId ? (
+                    "Update Product"
+                  ) : (
+                    "Create Product"
+                  )}
                 </button>
               </div>
             </div>
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={statusTarget !== null}
+        title={
+          statusTarget?.is_active === 1
+            ? "Deactivate product?"
+            : "Activate product?"
+        }
+        description={
+          <>
+            <p>
+              Are you sure you want to{" "}
+              {statusTarget?.is_active === 1 ? "deactivate" : "activate"}{" "}
+              <span className="font-semibold text-slate-800">
+                {statusTarget?.name}
+              </span>
+              ?
+            </p>
+
+            {statusTarget?.is_active === 1 && (
+              <p className="mt-2">
+                This product or service will no longer appear in active
+                selections. You can activate it again later.
+              </p>
+            )}
+
+            {statusError && (
+              <p
+                role="alert"
+                className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+              >
+                {statusError}
+              </p>
+            )}
+          </>
+        }
+        confirmLabel={
+          statusTarget?.is_active === 1
+            ? "Deactivate product"
+            : "Activate product"
+        }
+        cancelLabel="Keep current status"
+        tone={statusTarget?.is_active === 1 ? "warning" : "default"}
+        isProcessing={isChangingStatus}
+        onConfirm={confirmToggleProductStatus}
+        onCancel={() => {
+          if (!isChangingStatus) {
+            setStatusTarget(null);
+            setStatusError("");
+          }
+        }}
+      />
     </main>
   );
 }
