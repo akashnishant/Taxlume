@@ -17,6 +17,7 @@ import ReceivablesAgingChart from "./ReceivablesAgingChart";
 import InvoiceCollectionStatusChart from "./InvoiceCollectionStatusChart";
 import TopCustomersChart from "./TopCustomersChart";
 import CollectionsByMethodChart from "./CollectionsByMethodChart";
+import LoadingState from "./LoadingState";
 
 type DateRange = {
   startDate: string;
@@ -320,12 +321,16 @@ export default function BusinessAnalyticsOverview({
       </div>
 
       {isLoading ? (
-        <div
-          role="status"
-          className="rounded-2xl border border-slate-200 bg-white p-8 text-sm text-slate-500 shadow-sm"
+        <section
+          aria-label="Loading business analytics"
+          className="flex min-h-[320px] items-center justify-center rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
         >
-          Loading business analytics…
-        </div>
+          <LoadingState
+            message="Loading business analytics..."
+            description="Preparing your sales, collections, and receivables charts."
+            variant="page"
+          />
+        </section>
       ) : error || !data ? (
         <div
           role="alert"
