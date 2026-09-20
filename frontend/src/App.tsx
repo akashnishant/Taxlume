@@ -1,5 +1,11 @@
-import { lazy, Suspense } from "react";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { lazy, Suspense, useEffect } from "react";
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+} from "react-router-dom";
 
 import LoadingState from "./components/LoadingState";
 
@@ -21,15 +27,67 @@ import NewPurchase from "./pages/NewPurchase";
 import Subscribe from "./pages/Subscribe";
 import SubscriptionRequiredRoute from "./routes/SubscriptionRequiredRoute";
 
+import { getAuthToken } from "./services/authStorage";
+
+const Landing = lazy(() => import("./pages/Landing"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Reports = lazy(() => import("./pages/Reports"));
+
+function WelcomeRoute() {
+  if (getAuthToken()) {
+    return <Navigate to="/" replace />;
+  }
+
+  return (
+    <Suspense
+      fallback={<LoadingState message="Loading Taxlume..." variant="screen" />}
+    >
+      <Landing />
+    </Suspense>
+  );
+}
+
+function GuestRoute({ children }: { children: React.ReactNode }) {
+  if (getAuthToken()) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <>{children}</>;
+}
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+}
 
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/welcome" element={<WelcomeRoute />} />
+        <Route
+          path="/login"
+          element={
+            <GuestRoute>
+              <Login />
+            </GuestRoute>
+          }
+        />
+
+        <Route
+          path="/register"
+          element={
+            <GuestRoute>
+              <Register />
+            </GuestRoute>
+          }
+        />
 
         <Route element={<ProtectedRoute />}>
           <Route path="/subscribe" element={<Subscribe />} />

@@ -58,15 +58,21 @@ export default function Login() {
     <div className="min-h-screen bg-slate-100 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-slate-900 text-white text-2xl font-bold shadow-lg">
-            T
-          </div>
+          <Link
+            to="/welcome"
+            aria-label="Go to Taxlume landing page"
+            className="inline-flex flex-col items-center rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-indigo-600"
+          >
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-slate-900 text-white text-2xl font-bold shadow-lg">
+              T
+            </div>
 
-          <h1 className="mt-4 text-3xl font-bold text-slate-900">Taxlume</h1>
+            <h1 className="mt-4 text-3xl font-bold text-slate-900">Taxlume</h1>
 
-          <p className="mt-2 text-sm font-medium text-slate-600">
-            Smart Billing for Growing Businesses
-          </p>
+            <p className="mt-2 text-sm font-medium text-slate-600">
+              Smart Billing for Growing Businesses
+            </p>
+          </Link>
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8">

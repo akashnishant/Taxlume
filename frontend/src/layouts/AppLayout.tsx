@@ -15,7 +15,7 @@ import {
 import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { clearAuthToken } from "../services/authStorage";
-import { getSession } from "../services/sessionStorage";
+import { clearSession, getSession } from "../services/sessionStorage";
 import { getCompany, type Company } from "../services/companyApi";
 
 const navigation = [
@@ -61,6 +61,20 @@ const navigation = [
   },
 ];
 
+function getInitials(fullName?: string | null): string {
+  const nameParts = fullName?.trim().split(/\s+/).filter(Boolean) ?? [];
+
+  if (nameParts.length === 0) {
+    return "U";
+  }
+
+  if (nameParts.length === 1) {
+    return nameParts[0].slice(0, 2).toUpperCase();
+  }
+
+  return (nameParts[0][0] + nameParts[nameParts.length - 1][0]).toUpperCase();
+}
+
 export default function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -83,7 +97,8 @@ export default function AppLayout() {
 
   function handleLogout() {
     clearAuthToken();
-    window.location.href = "/login";
+    clearSession();
+    window.location.replace("/welcome");
   }
 
   return (
@@ -152,8 +167,11 @@ export default function AppLayout() {
 
         <div className="border-t border-slate-200 p-4">
           <div className="mb-3 flex items-center gap-3 rounded-lg bg-slate-50 p-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-200 text-sm font-semibold text-slate-700">
-              FT
+            <div
+              aria-label="User initials"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-200 text-sm font-semibold text-slate-700"
+            >
+              {getInitials(session?.user.full_name)}
             </div>
 
             <div className="min-w-0">

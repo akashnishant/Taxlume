@@ -255,7 +255,8 @@ export default function Subscribe() {
   function handleLogout() {
     clearAuthToken();
     clearSession();
-    navigate("/login", {
+
+    navigate("/welcome", {
       replace: true,
     });
   }

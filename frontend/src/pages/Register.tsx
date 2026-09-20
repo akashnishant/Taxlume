@@ -212,11 +212,19 @@ export default function Register() {
     <div className="min-h-screen bg-slate-100 px-4 py-10">
       <div className="mx-auto w-full max-w-3xl">
         <div className="mb-8 text-center">
-          <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-900 text-2xl font-bold text-white shadow-lg">
-            T
-          </div>
+          <Link
+            to="/welcome"
+            aria-label="Go to Taxlume landing page"
+            className="inline-flex flex-col items-center rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-indigo-600"
+          >
+            <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-900 text-2xl font-bold text-white shadow-lg">
+              T
+            </span>
 
-          <h1 className="mt-4 text-3xl font-bold text-slate-900">Taxlume</h1>
+            <span className="mt-4 text-3xl font-bold text-slate-900">
+              Taxlume
+            </span>
+          </Link>
 
           <p className="mt-2 text-sm font-medium text-slate-600">
             Smart Billing for Growing Businesses
