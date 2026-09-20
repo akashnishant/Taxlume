@@ -34,6 +34,7 @@ type DocumentRow = {
     igst_paise: number;
     cess_paise: number;
     total_paise: number;
+    amount_paid_paise: number;
     place_of_supply_state: string | null;
     place_of_supply_state_code: string | null;
 };
@@ -122,6 +123,9 @@ export class DocumentStatus extends OpenAPIRoute {
             "404": {
                 description: "Document not found",
             },
+            "409": {
+                description: "Invoice has recorded payments and cannot be cancelled",
+            },
         },
     };
 
@@ -163,6 +167,7 @@ export class DocumentStatus extends OpenAPIRoute {
                         igst_paise,
                         cess_paise,
                         total_paise,
+                        amount_paid_paise,
                         place_of_supply_state,
                         place_of_supply_state_code
                     FROM documents
@@ -201,6 +206,36 @@ export class DocumentStatus extends OpenAPIRoute {
                 },
                 400,
             );
+        }
+
+        if (
+            currentStatus === "ISSUED" &&
+            requestedStatus === "CANCELLED" &&
+            document.document_type === "TAX_INVOICE"
+            ) {
+            const receiptHistory = await c.env.DB
+                .prepare(
+                `
+                    SELECT 1 AS has_receipt
+                    FROM invoice_receipts
+                    WHERE company_id = ?
+                    AND document_id = ?
+                    LIMIT 1
+                `,
+                )
+                .bind(companyId, document.id)
+                .first<{ has_receipt: number }>();
+
+            if (document.amount_paid_paise > 0 || receiptHistory) {
+                return c.json(
+                {
+                    success: false,
+                    message:
+                    "This invoice has recorded payments and cannot be cancelled. Review its payment history before proceeding.",
+                },
+                409,
+                );
+            }
         }
 
         /*
@@ -766,6 +801,25 @@ export class DocumentStatus extends OpenAPIRoute {
                 await c.env.DB.batch(statements);
         } catch (error) {
             await cleanupCopiedSnapshotAssets();
+
+            const errorMessage =
+                error instanceof Error ? error.message : String(error);
+
+            if (
+                requestedStatus === "CANCELLED" &&
+                errorMessage.includes(
+                "This invoice has recorded payments and cannot be cancelled.",
+                )
+            ) {
+                return c.json(
+                {
+                    success: false,
+                    message:
+                    "This invoice has recorded payments and cannot be cancelled. Refresh the invoice to see its latest payment details.",
+                },
+                409,
+                );
+            }
 
             throw error;
         }

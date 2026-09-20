@@ -45,6 +45,9 @@ import { DashboardSummary } from "./endpoints/dashboardSummary";
 import { ReportSalesRegister } from "./endpoints/reportSalesRegister";
 import { ReportPurchaseOrderRegister } from "./endpoints/reportPurchaseOrderRegister";
 import { ReportTaxSummary } from "./endpoints/reportTaxSummary";
+import { InvoiceReceiptList } from "./endpoints/invoiceReceiptList";
+import { InvoiceReceiptCreate } from "./endpoints/invoiceReceiptCreate";
+import { InvoiceReceiptReverse } from "./endpoints/invoiceReceiptReverse";
 
 import { authMiddleware } from "./middleware/auth";
 import { subscriptionMiddleware } from "./middleware/subscription";
@@ -288,6 +291,21 @@ openapi.post("/api/documents", DocumentCreate);
 openapi.get("/api/documents", DocumentList);
 
 openapi.get("/api/documents/:id", DocumentGet);
+
+openapi.get(
+  "/api/documents/:id/receipts",
+  InvoiceReceiptList,
+);
+
+openapi.post(
+  "/api/documents/:id/receipts",
+  InvoiceReceiptCreate,
+);
+
+openapi.patch(
+  "/api/documents/:id/receipts/:receiptId/reverse",
+  InvoiceReceiptReverse,
+);
 
 openapi.put("/api/documents/:id", DocumentUpdate);
 
