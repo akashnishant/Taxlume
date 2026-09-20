@@ -17,6 +17,7 @@ import LoadingState from "../components/LoadingState";
 import ButtonLoadingContent from "../components/ButtonLoadingContent";
 import ConfirmDialog from "../components/ConfirmDialog";
 import { useNotification } from "../hooks/useNotifications";
+import InvoicePaymentsPanel from "../components/InvoicePaymentsPanel";
 
 function formatDocumentType(documentType: string): string {
   switch (documentType) {
@@ -86,6 +87,26 @@ export default function SalesDocumentDetails() {
     null,
   );
 
+  const [paymentHistory, setPaymentHistory] = useState<{
+    invoiceId: string;
+    hasReceipts: boolean | null;
+  } | null>(null);
+
+  const isIssuedTaxInvoice =
+    document?.document_type === "TAX_INVOICE" && document.status === "ISSUED";
+
+  const cancellationBlockedByHistory =
+    isIssuedTaxInvoice &&
+    !(
+      paymentHistory?.invoiceId === document?.id &&
+      paymentHistory.hasReceipts === false
+    );
+
+  const cancellationHasReceipts =
+    isIssuedTaxInvoice &&
+    paymentHistory?.invoiceId === document?.id &&
+    paymentHistory.hasReceipts === true;
+
   useEffect(() => {
     async function loadDocument() {
       if (!id) {
@@ -94,6 +115,7 @@ export default function SalesDocumentDetails() {
         return;
       }
 
+      setPaymentHistory(null);
       setIsLoading(true);
       setError("");
 
@@ -132,7 +154,8 @@ export default function SalesDocumentDetails() {
       document.status !== "ISSUED" ||
       isIssuing ||
       isCancelling ||
-      isGeneratingPdf
+      isGeneratingPdf ||
+      cancellationBlockedByHistory
     ) {
       return;
     }
@@ -223,7 +246,8 @@ export default function SalesDocumentDetails() {
       pendingAction !== "CANCEL" ||
       isIssuing ||
       isCancelling ||
-      isGeneratingPdf
+      isGeneratingPdf ||
+      cancellationBlockedByHistory
     ) {
       return;
     }
@@ -555,18 +579,33 @@ export default function SalesDocumentDetails() {
           )}
 
           {document.status === "ISSUED" && (
-            <button
-              type="button"
-              onClick={requestCancel}
-              disabled={isIssuing || isCancelling || isGeneratingPdf}
-              className="cursor-pointer rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {isCancelling ? (
-                <ButtonLoadingContent message="Cancelling document..." />
-              ) : (
-                "Cancel Document"
+            <div className="flex flex-col items-end gap-1">
+              <button
+                type="button"
+                onClick={requestCancel}
+                disabled={
+                  isIssuing ||
+                  isCancelling ||
+                  isGeneratingPdf ||
+                  cancellationBlockedByHistory
+                }
+                className="cursor-pointer rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isCancelling ? (
+                  <ButtonLoadingContent message="Cancelling document..." />
+                ) : (
+                  "Cancel Document"
+                )}
+              </button>
+
+              {cancellationBlockedByHistory && (
+                <p className="max-w-xs text-right text-xs text-slate-500">
+                  {cancellationHasReceipts
+                    ? "Cancellation is unavailable because this invoice has payment history, including any reversed receipts."
+                    : "Checking payment history before cancellation. If it cannot be loaded, use Try again in Customer Payments."}
+                </p>
               )}
-            </button>
+            </div>
           )}
         </div>
       </div>
@@ -831,6 +870,34 @@ export default function SalesDocumentDetails() {
             </div>
           </div>
         </section>
+
+        {!isPurchaseRoute &&
+          document.document_type === "TAX_INVOICE" &&
+          document.status === "ISSUED" && (
+            <InvoicePaymentsPanel
+              invoiceId={document.id}
+              currencyCode={document.currency_code}
+              onBalanceChange={(amountPaidPaise) => {
+                setDocument((current) =>
+                  current && current.id === document.id
+                    ? {
+                        ...current,
+                        totals: {
+                          ...current.totals,
+                          amount_paid_paise: amountPaidPaise,
+                        },
+                      }
+                    : current,
+                );
+              }}
+              onReceiptHistoryChange={(hasReceipts) => {
+                setPaymentHistory({
+                  invoiceId: document.id,
+                  hasReceipts,
+                });
+              }}
+            />
+          )}
       </div>
 
       <ConfirmDialog

@@ -109,7 +109,7 @@ export default function AppLayout() {
             onClick={() => setSidebarOpen(false)}
           >
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-900 text-lg font-bold text-white">
-              B
+              T
             </div>
 
             <span className="text-lg font-bold text-slate-900">Taxlume</span>
