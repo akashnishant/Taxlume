@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
 import {
   ArrowDownLeft,
-  ArrowUpRight,
   FileText,
   ReceiptIndianRupee,
   Users,
-  Wallet,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -13,6 +11,7 @@ import {
   type DashboardData,
   type DashboardRecentDocument,
 } from "../services/dashboardApi";
+import BusinessAnalyticsOverview from "../components/BusinessAnalyticsOverview";
 import LoadingState from "../components/LoadingState";
 
 function formatMoney(amountPaise: number, currencyCode: string): string {
@@ -208,33 +207,24 @@ export default function Dashboard() {
 
   const stats = [
     {
-      title: "Total Sales",
-      value: formatMoney(summary.total_sales_paise, summary.currency_code),
-      description: "Issued tax invoices",
-      icon: ArrowUpRight,
-    },
-
-    {
       title: "Purchase Orders",
       value: formatMoney(summary.total_purchases_paise, summary.currency_code),
-      description: "Issued purchase orders",
+      description: "Issued orders · All time",
       icon: ArrowDownLeft,
     },
-
     {
-      title: "Outstanding Sales",
+      title: "Purchase Orders This Month",
       value: formatMoney(
-        summary.outstanding_sales_paise,
+        summary.this_month_purchases_paise,
         summary.currency_code,
       ),
-      description: "Amount still receivable",
-      icon: Wallet,
+      description: "Issued orders · Current month",
+      icon: ReceiptIndianRupee,
     },
-
     {
-      title: "Customers",
+      title: "Active Customers",
       value: summary.customer_count.toString(),
-      description: "Active customers",
+      description: "Customers available to your company",
       icon: Users,
     },
   ];
@@ -261,7 +251,11 @@ export default function Dashboard() {
           </button>
         </div>
 
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mb-8">
+          <BusinessAnalyticsOverview />
+        </div>
+
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {stats.map((stat) => {
             const Icon = stat.icon;
 
@@ -292,50 +286,6 @@ export default function Dashboard() {
               </div>
             );
           })}
-        </div>
-
-        <div className="mt-5 grid gap-5 md:grid-cols-2">
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-500">
-                  Sales This Month
-                </p>
-
-                <p className="mt-2 text-2xl font-bold text-slate-900">
-                  {formatMoney(
-                    summary.this_month_sales_paise,
-                    summary.currency_code,
-                  )}
-                </p>
-              </div>
-
-              <div className="rounded-lg bg-slate-100 p-3">
-                <ReceiptIndianRupee size={22} className="text-slate-700" />
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-500">
-                  Purchase Orders This Month
-                </p>
-
-                <p className="mt-2 text-2xl font-bold text-slate-900">
-                  {formatMoney(
-                    summary.this_month_purchases_paise,
-                    summary.currency_code,
-                  )}
-                </p>
-              </div>
-
-              <div className="rounded-lg bg-slate-100 p-3">
-                <ReceiptIndianRupee size={22} className="text-slate-700" />
-              </div>
-            </div>
-          </div>
         </div>
 
         <div className="mt-8 grid gap-6 xl:grid-cols-2">

@@ -48,6 +48,7 @@ import { ReportTaxSummary } from "./endpoints/reportTaxSummary";
 import { InvoiceReceiptList } from "./endpoints/invoiceReceiptList";
 import { InvoiceReceiptCreate } from "./endpoints/invoiceReceiptCreate";
 import { InvoiceReceiptReverse } from "./endpoints/invoiceReceiptReverse";
+import { ReportOverview } from "./endpoints/reportOverview";
 
 import { authMiddleware } from "./middleware/auth";
 import { subscriptionMiddleware } from "./middleware/subscription";
@@ -155,6 +156,11 @@ app.use(
   "/api/reports/*",
   authMiddleware,
   subscriptionMiddleware,
+);
+
+openapi.get(
+  "/api/reports/overview",
+  ReportOverview,
 );
 
 openapi.get(

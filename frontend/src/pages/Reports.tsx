@@ -9,6 +9,7 @@ import {
   type SalesRegisterResponse,
 } from "../services/reportsApi";
 import TaxSummaryReport from "../components/TaxSummaryReport";
+import BusinessAnalyticsOverview from "../components/BusinessAnalyticsOverview";
 
 type DateRange = {
   startDate: string;
@@ -88,8 +89,8 @@ export default function Reports() {
   const navigate = useNavigate();
 
   const [reportType, setReportType] = useState<
-    "sales" | "purchase-orders" | "tax-summary"
-  >("sales");
+    "overview" | "sales" | "purchase-orders" | "tax-summary"
+  >("overview");
 
   const [draftRange, setDraftRange] = useState<DateRange>(getCurrentMonthRange);
 
@@ -124,7 +125,7 @@ export default function Reports() {
   const documentBasePath = isSalesReport ? "/sales" : "/purchases";
 
   useEffect(() => {
-    if (reportType === "tax-summary") {
+    if (reportType === "tax-summary" || reportType === "overview") {
       setIsLoading(false);
       setError("");
       setData(null);
@@ -191,7 +192,12 @@ export default function Reports() {
   }
 
   async function exportSalesRegisterCsv() {
-    if (isExporting || isLoading || !data || reportType === "tax-summary") {
+    if (
+      isExporting ||
+      isLoading ||
+      !data ||
+      (reportType !== "sales" && reportType !== "purchase-orders")
+    ) {
       return;
     }
 
@@ -332,6 +338,7 @@ export default function Reports() {
         >
           {(
             [
+              { value: "overview", label: "Business Overview" },
               { value: "sales", label: "Sales Register" },
               {
                 value: "purchase-orders",
@@ -368,85 +375,95 @@ export default function Reports() {
           ))}
         </div>
 
-        <div className="mb-5">
-          <h2 className="text-lg font-semibold text-slate-900">
-            {reportTitle}
-          </h2>
+        {reportType !== "overview" && (
+          <div className="mb-5">
+            <h2 className="text-lg font-semibold text-slate-900">
+              {reportTitle}
+            </h2>
 
-          <p className="mt-1 text-sm text-slate-500">
-            {isTaxReport
-              ? "Monthly taxable value and tax amounts recorded on issued tax invoices. Figures are separated by currency."
-              : isSalesReport
-                ? "Issued tax invoices only. Drafts, cancelled invoices, quotations, and proforma invoices are excluded."
-                : "Issued purchase orders only. Drafts and cancelled orders are excluded. Purchase orders represent orders placed—not confirmed purchase expenditure or claimable input GST."}
-          </p>
-        </div>
-
-        <form
-          onSubmit={applyFilters}
-          className="flex flex-wrap items-end gap-4"
-        >
-          <div>
-            <label
-              htmlFor="report-start-date"
-              className="mb-2 block text-sm font-medium text-slate-700"
-            >
-              Start Date
-            </label>
-
-            <input
-              id="report-start-date"
-              type="date"
-              value={draftRange.startDate}
-              onChange={(event) =>
-                setDraftRange((current) => ({
-                  ...current,
-                  startDate: event.target.value,
-                }))
-              }
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500"
-            />
+            <p className="mt-1 text-sm text-slate-500">
+              {isTaxReport
+                ? "Monthly taxable value and tax amounts recorded on issued tax invoices. Figures are separated by currency."
+                : isSalesReport
+                  ? "Issued tax invoices only. Drafts, cancelled invoices, quotations, and proforma invoices are excluded."
+                  : "Issued purchase orders only. Drafts and cancelled orders are excluded. Purchase orders represent orders placed—not confirmed purchase expenditure or claimable input GST."}
+            </p>
           </div>
+        )}
 
-          <div>
-            <label
-              htmlFor="report-end-date"
-              className="mb-2 block text-sm font-medium text-slate-700"
+        {reportType !== "overview" && (
+          <>
+            <form
+              onSubmit={applyFilters}
+              className="flex flex-wrap items-end gap-4"
             >
-              End Date
-            </label>
+              <div>
+                <label
+                  htmlFor="report-start-date"
+                  className="mb-2 block text-sm font-medium text-slate-700"
+                >
+                  Start Date
+                </label>
 
-            <input
-              id="report-end-date"
-              type="date"
-              value={draftRange.endDate}
-              onChange={(event) =>
-                setDraftRange((current) => ({
-                  ...current,
-                  endDate: event.target.value,
-                }))
-              }
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500"
-            />
-          </div>
+                <input
+                  id="report-start-date"
+                  type="date"
+                  value={draftRange.startDate}
+                  onChange={(event) =>
+                    setDraftRange((current) => ({
+                      ...current,
+                      startDate: event.target.value,
+                    }))
+                  }
+                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500"
+                />
+              </div>
 
-          <button
-            type="submit"
-            disabled={isLoading || isExporting}
-            className="rounded-lg bg-slate-900 px-5 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Apply Filters
-          </button>
-        </form>
+              <div>
+                <label
+                  htmlFor="report-end-date"
+                  className="mb-2 block text-sm font-medium text-slate-700"
+                >
+                  End Date
+                </label>
 
-        {filterError && (
-          <p role="alert" className="mt-3 text-sm text-red-600">
-            {filterError}
-          </p>
+                <input
+                  id="report-end-date"
+                  type="date"
+                  value={draftRange.endDate}
+                  onChange={(event) =>
+                    setDraftRange((current) => ({
+                      ...current,
+                      endDate: event.target.value,
+                    }))
+                  }
+                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading || isExporting}
+                className="rounded-lg bg-slate-900 px-5 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Apply Filters
+              </button>
+            </form>
+
+            {filterError && (
+              <p role="alert" className="mt-3 text-sm text-red-600">
+                {filterError}
+              </p>
+            )}
+          </>
         )}
       </section>
 
-      {isTaxReport ? (
+      {reportType === "overview" ? (
+        <div className="mt-6">
+          <BusinessAnalyticsOverview showTopCustomers />
+        </div>
+      ) : isTaxReport ? (
         <TaxSummaryReport
           startDate={appliedRange.startDate}
           endDate={appliedRange.endDate}

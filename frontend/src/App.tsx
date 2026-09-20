@@ -1,7 +1,11 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+
+import LoadingState from "./components/LoadingState";
+
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import Dashboard from "./pages/Dashboard";
+
 import ProtectedRoute from "./routes/ProtectedRoute";
 import AppLayout from "./layouts/AppLayout";
 import Settings from "./pages/Settings";
@@ -16,7 +20,9 @@ import Purchases from "./pages/Purchases";
 import NewPurchase from "./pages/NewPurchase";
 import Subscribe from "./pages/Subscribe";
 import SubscriptionRequiredRoute from "./routes/SubscriptionRequiredRoute";
-import Reports from "./pages/Reports";
+
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Reports = lazy(() => import("./pages/Reports"));
 
 function App() {
   return (
@@ -30,7 +36,23 @@ function App() {
 
           <Route element={<SubscriptionRequiredRoute />}>
             <Route element={<AppLayout />}>
-              <Route path="/" element={<Dashboard />} />
+              <Route
+                path="/"
+                element={
+                  <Suspense
+                    fallback={
+                      <main className="mx-auto max-w-7xl px-6 py-8">
+                        <LoadingState
+                          message="Loading your dashboard..."
+                          description="Retrieving your latest sales, purchases, and business summary."
+                        />
+                      </main>
+                    }
+                  >
+                    <Dashboard />
+                  </Suspense>
+                }
+              />
               <Route path="/sales" element={<Sales />} />
               <Route path="/sales/new" element={<NewSale />} />
               <Route path="/sales/:id" element={<SalesDocumentDetails />} />
@@ -45,7 +67,23 @@ function App() {
               <Route path="/customers" element={<Customers />} />
               <Route path="/vendors" element={<Vendors />} />
               <Route path="/products" element={<Products />} />
-              <Route path="/reports" element={<Reports />} />
+              <Route
+                path="/reports"
+                element={
+                  <Suspense
+                    fallback={
+                      <main className="mx-auto max-w-7xl px-6 py-8">
+                        <LoadingState
+                          message="Loading reports..."
+                          description="Preparing your business reports."
+                        />
+                      </main>
+                    }
+                  >
+                    <Reports />
+                  </Suspense>
+                }
+              />
               <Route path="/settings" element={<Settings />} />
             </Route>
           </Route>
