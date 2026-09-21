@@ -14,9 +14,9 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
-import { clearAuthToken } from "../services/authStorage";
-import { clearSession, getSession } from "../services/sessionStorage";
+import { getSession } from "../services/sessionStorage";
 import { getCompany, type Company } from "../services/companyApi";
+import { endSession } from "../services/endSession";
 
 const navigation = [
   {
@@ -96,9 +96,7 @@ export default function AppLayout() {
   }, []);
 
   function handleLogout() {
-    clearAuthToken();
-    clearSession();
-    window.location.replace("/welcome");
+    endSession("manual");
   }
 
   return (

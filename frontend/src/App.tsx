@@ -29,6 +29,8 @@ import SubscriptionRequiredRoute from "./routes/SubscriptionRequiredRoute";
 
 import { getAuthToken } from "./services/authStorage";
 
+import SessionMonitor from "./components/SessionMonitor";
+
 const Landing = lazy(() => import("./pages/Landing"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Reports = lazy(() => import("./pages/Reports"));
@@ -68,6 +70,7 @@ function ScrollToTop() {
 function App() {
   return (
     <BrowserRouter>
+      <SessionMonitor />
       <ScrollToTop />
       <Routes>
         <Route path="/welcome" element={<WelcomeRoute />} />

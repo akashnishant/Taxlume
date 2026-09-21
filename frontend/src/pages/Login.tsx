@@ -1,14 +1,26 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { login } from "../services/authApi";
 import { setAuthToken } from "../services/authStorage";
 import { setSession } from "../services/sessionStorage";
 import ButtonLoadingContent from "../components/ButtonLoadingContent";
+import { startSessionTiming } from "../services/sessionTiming";
 
 export default function Login() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const expiryReason = searchParams.get("reason");
+
+  const expiryMessage =
+    expiryReason === "inactive"
+      ? "You were signed out after 30 minutes of inactivity. Please sign in again."
+      : expiryReason === "expired"
+        ? "Your 12-hour session has expired. Please sign in again."
+        : expiryReason === "reauth"
+          ? "Your previous session is no longer valid. Please sign in again."
+          : null;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -35,12 +47,13 @@ export default function Login() {
         password,
       });
 
-      setAuthToken(response.token);
-
       setSession({
         user: response.user,
         company: response.company,
       });
+
+      startSessionTiming();
+      setAuthToken(response.token);
 
       navigate("/", { replace: true });
     } catch (error: any) {
@@ -85,6 +98,15 @@ export default function Login() {
               Enter your account details to continue.
             </p>
           </div>
+
+          {expiryMessage && (
+            <div
+              role="status"
+              className="mb-5 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+            >
+              {expiryMessage}
+            </div>
+          )}
 
           {error && (
             <div

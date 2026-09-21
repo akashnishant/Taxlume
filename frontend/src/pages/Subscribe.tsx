@@ -9,8 +9,7 @@ import {
   type SubscriptionPlan,
   type SubscriptionPrice,
 } from "../services/subscriptionApi";
-import { clearAuthToken } from "../services/authStorage";
-import { clearSession } from "../services/sessionStorage";
+import { endSession } from "../services/endSession";
 import { loadRazorpayCheckout } from "../payments/loadRazorpayCheckout";
 import SubscriptionCheckingScreen from "../components/SubscriptionCheckingScreen";
 
@@ -253,12 +252,7 @@ export default function Subscribe() {
   }
 
   function handleLogout() {
-    clearAuthToken();
-    clearSession();
-
-    navigate("/welcome", {
-      replace: true,
-    });
+    endSession("manual");
   }
 
   if (isCheckingSubscription) {

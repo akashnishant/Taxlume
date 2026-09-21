@@ -1,3 +1,5 @@
+import { clearSessionTiming } from "./sessionTiming";
+
 const AUTH_TOKEN_KEY = "billdesk_auth_token";
 
 export function getAuthToken(): string | null {
@@ -9,5 +11,6 @@ export function setAuthToken(token: string): void {
 }
 
 export function clearAuthToken(): void {
-    localStorage.removeItem(AUTH_TOKEN_KEY);
+  localStorage.removeItem(AUTH_TOKEN_KEY);
+  clearSessionTiming();
 }

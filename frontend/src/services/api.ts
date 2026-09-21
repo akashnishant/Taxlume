@@ -1,5 +1,6 @@
 import axios from "axios";
 import { getAuthToken } from "./authStorage";
+import { endSession } from "./endSession";
 
 type ApiErrorResponse = {
     success?: boolean;
@@ -43,6 +44,24 @@ api.interceptors.response.use(
                 ?.data as
                 | ApiErrorResponse
                 | undefined;
+
+        const requestUrl = error.config?.url ?? "";
+        const isGuestRequest =
+            /\/api\/auth\/(login|register)(?:\?|$)/.test(requestUrl);
+
+        const requestAuthorization =
+        error.config?.headers?.Authorization;
+
+        const currentToken = getAuthToken();
+
+        if (
+        status === 401 &&
+        !isGuestRequest &&
+        currentToken &&
+        requestAuthorization === `Bearer ${currentToken}`
+        ) {
+            endSession("reauth");
+        }
 
         if (
             status === 402 &&
