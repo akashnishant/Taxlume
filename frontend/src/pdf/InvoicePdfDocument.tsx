@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
   companyName: {
     fontSize: 13,
     fontWeight: 700,
-    marginBottom: 2,
+    marginBottom: 8,
   },
 
   companyLegalName: {
@@ -118,6 +118,19 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#cbd5e1",
     marginBottom: 7,
+  },
+
+  // taxlume-stage2a6: sales PDF enhancements
+  shipToBox: {
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+    padding: 7,
+    marginBottom: 8,
+  },
+
+  chargeLabel: {
+    width: "60%",
+    paddingRight: 5,
   },
 
   infoGrid: {
@@ -426,6 +439,30 @@ function formatDate(date: string | null): string {
   return `${day}-${month}-${year}`;
 }
 
+function formatPaymentTerms(
+  code: string | null,
+  custom: string | null,
+): string {
+  switch (code) {
+    case "DUE_ON_RECEIPT":
+      return "Due on Receipt";
+    case "NET_7":
+      return "Net 7";
+    case "NET_15":
+      return "Net 15";
+    case "NET_30":
+      return "Net 30";
+    case "NET_45":
+      return "Net 45";
+    case "NET_60":
+      return "Net 60";
+    case "CUSTOM":
+      return custom?.trim() || "Custom";
+    default:
+      return "-";
+  }
+}
+
 function getPartyAddress(document: InvoiceDetails) {
   if (!document.party?.addresses.length) {
     return null;
@@ -556,6 +593,16 @@ export default function InvoicePdfDocument({
 }: InvoicePdfDocumentProps) {
   const partyAddress = getPartyAddress(document);
   const isPurchaseOrder = document.document_type === "PURCHASE_ORDER";
+
+  // Legacy NULL shipping mode means Same as Bill To.
+  const shipToSameAsBillTo =
+    document.ship_to.same_as_bill_to !== false;
+
+  const balanceDuePaise = Math.max(
+    0,
+    document.totals.total_paise -
+      document.totals.amount_paid_paise,
+  );
 
   const showPaymentQr =
     !isPurchaseOrder &&
@@ -695,7 +742,7 @@ export default function InvoicePdfDocument({
               </Text>
             </View>
 
-            {document.due_date && (
+            {(document.due_date || !isPurchaseOrder) && (
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Due Date</Text>
 
@@ -703,6 +750,29 @@ export default function InvoicePdfDocument({
                   {formatDate(document.due_date)}
                 </Text>
               </View>
+            )}
+
+            {!isPurchaseOrder && (
+              <>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Payment Terms</Text>
+
+                  <Text style={styles.detailValue}>
+                    {formatPaymentTerms(
+                      document.payment_terms.code,
+                      document.payment_terms.custom,
+                    )}
+                  </Text>
+                </View>
+
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Customer PO</Text>
+
+                  <Text style={styles.detailValue}>
+                    {document.customer_po_number || "-"}
+                  </Text>
+                </View>
+              </>
             )}
 
             <View style={styles.detailRow}>
@@ -716,12 +786,12 @@ export default function InvoicePdfDocument({
               </Text>
             </View>
 
-            {document.reference_number && (
+            {(document.reference_number || !isPurchaseOrder) && (
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Reference</Text>
 
                 <Text style={styles.detailValue}>
-                  {document.reference_number}
+                  {document.reference_number || "-"}
                 </Text>
               </View>
             )}
@@ -733,6 +803,113 @@ export default function InvoicePdfDocument({
             </View>
           </View>
         </View>
+
+        {!isPurchaseOrder && (
+          <View style={styles.shipToBox}>
+            <Text style={styles.sectionTitle}>
+              Ship To
+              {shipToSameAsBillTo
+                ? " - Same as Bill To"
+                : ""}
+            </Text>
+
+            {shipToSameAsBillTo ? (
+              <>
+                <Text style={styles.partyName}>
+                  {document.party?.display_name ||
+                    document.party?.legal_name ||
+                    "-"}
+                </Text>
+
+                {document.party?.legal_name &&
+                  document.party.legal_name !==
+                    document.party.display_name && (
+                    <Text style={styles.smallText}>
+                      {document.party.legal_name}
+                    </Text>
+                  )}
+
+                <Text style={styles.smallText}>
+                  {[
+                    partyAddress?.address_line1,
+                    partyAddress?.address_line2,
+                  ]
+                    .filter(Boolean)
+                    .join(", ") || "-"}
+                </Text>
+
+                <Text style={styles.smallText}>
+                  {[
+                    partyAddress?.city,
+                    partyAddress?.state,
+                    partyAddress?.pincode,
+                    partyAddress?.country,
+                  ]
+                    .filter(Boolean)
+                    .join(", ") || "-"}
+                </Text>
+
+                <Text style={styles.smallText}>
+                  GSTIN: {document.party?.gstin || "-"}
+                </Text>
+
+                <Text style={styles.smallText}>
+                  {[
+                    document.party?.phone,
+                    document.party?.email,
+                  ]
+                    .filter(Boolean)
+                    .join(" | ") || "-"}
+                </Text>
+              </>
+            ) : (
+              <>
+                <Text style={styles.partyName}>
+                  {document.ship_to.name || "-"}
+                </Text>
+
+                {document.ship_to.contact_person && (
+                  <Text style={styles.smallText}>
+                    Contact: {document.ship_to.contact_person}
+                  </Text>
+                )}
+
+                <Text style={styles.smallText}>
+                  {[
+                    document.ship_to.address_line1,
+                    document.ship_to.address_line2,
+                  ]
+                    .filter(Boolean)
+                    .join(", ") || "-"}
+                </Text>
+
+                <Text style={styles.smallText}>
+                  {[
+                    document.ship_to.city,
+                    document.ship_to.state,
+                    document.ship_to.pincode,
+                    document.ship_to.country,
+                  ]
+                    .filter(Boolean)
+                    .join(", ") || "-"}
+                </Text>
+
+                <Text style={styles.smallText}>
+                  GSTIN: {document.ship_to.gstin || "-"}
+                </Text>
+
+                <Text style={styles.smallText}>
+                  {[
+                    document.ship_to.phone,
+                    document.ship_to.email,
+                  ]
+                    .filter(Boolean)
+                    .join(" | ") || "-"}
+                </Text>
+              </>
+            )}
+          </View>
+        )}
 
         <View style={styles.table}>
           <View style={styles.tableHeader} fixed>
@@ -841,6 +1018,53 @@ export default function InvoicePdfDocument({
               </Text>
             </View>
 
+            {!isPurchaseOrder &&
+              document.additional_charge.amount_paise > 0 && (
+                <>
+                  <View style={styles.totalRow}>
+                    <Text style={[styles.muted, styles.chargeLabel]}>
+                      {document.additional_charge.label ||
+                        "Additional Charge"}
+                    </Text>
+
+                    <Text>
+                      {formatMoney(
+                        document.additional_charge.amount_paise,
+                        document.currency_code,
+                      )}
+                    </Text>
+                  </View>
+
+                  <View style={styles.totalRow}>
+                    <Text style={[styles.muted, styles.chargeLabel]}>
+                      {document.additional_charge.taxable
+                        ? "Taxable @ " +
+                          (
+                            document.additional_charge
+                              .gst_rate_bps / 100
+                          ).toString() +
+                          "% GST"
+                        : "Non-taxable charge"}
+                    </Text>
+                  </View>
+
+                  {document.additional_charge.taxable && (
+                    <View style={styles.totalRow}>
+                      <Text style={[styles.muted, styles.chargeLabel]}>
+                        GST on charge (included in tax below)
+                      </Text>
+
+                      <Text>
+                        {formatMoney(
+                          document.additional_charge.tax_paise,
+                          document.currency_code,
+                        )}
+                      </Text>
+                    </View>
+                  )}
+                </>
+              )}
+
             <View style={[styles.totalRow, styles.totalDivider]}>
               <Text>Taxable</Text>
 
@@ -916,7 +1140,7 @@ export default function InvoicePdfDocument({
             )}
 
             <View style={[styles.totalRow, styles.totalDivider]}>
-              <Text style={styles.grandTotal}>Total</Text>
+              <Text style={styles.grandTotal}>Grand Total</Text>
 
               <Text style={styles.grandTotal}>
                 {formatMoney(
@@ -925,6 +1149,32 @@ export default function InvoicePdfDocument({
                 )}
               </Text>
             </View>
+
+            {!isPurchaseOrder && (
+              <>
+                <View style={styles.totalRow}>
+                  <Text style={styles.muted}>Amount Paid</Text>
+
+                  <Text>
+                    {formatMoney(
+                      document.totals.amount_paid_paise,
+                      document.currency_code,
+                    )}
+                  </Text>
+                </View>
+
+                <View style={[styles.totalRow, styles.totalDivider]}>
+                  <Text style={styles.grandTotal}>Balance Due</Text>
+
+                  <Text style={styles.grandTotal}>
+                    {formatMoney(
+                      balanceDuePaise,
+                      document.currency_code,
+                    )}
+                  </Text>
+                </View>
+              </>
+            )}
           </View>
         </View>
 
@@ -933,7 +1183,9 @@ export default function InvoicePdfDocument({
             <View style={styles.notesColumn}>
               {document.notes && (
                 <>
-                  <Text style={styles.sectionTitle}>Notes</Text>
+                  <Text style={styles.sectionTitle}>
+                    {isPurchaseOrder ? "Notes" : "Customer Notes"}
+                  </Text>
 
                   <Text style={styles.textBlock}>{document.notes}</Text>
                 </>

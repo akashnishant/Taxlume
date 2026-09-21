@@ -25,6 +25,17 @@ import {
 import LoadingState from "../components/LoadingState";
 import { useNotification } from "../hooks/useNotifications";
 import ButtonLoadingContent from "../components/ButtonLoadingContent";
+import SalesInvoiceFields, {
+  SalesChargeEditor,
+} from "../components/SalesInvoiceFields";
+import {
+  calculateDocumentPreview,
+  dueDateForTerms,
+  newSalesEnhancementForm,
+  toSalesEnhancementUpdateRequest,
+  validateSalesEnhancements,
+  type SalesEnhancementForm,
+} from "../utils/salesDocumentEnhancements";
 
 type EditableSaleItem = {
   id: string;
@@ -39,6 +50,84 @@ type EditableSaleItem = {
   gstRateBps: number;
   cessRateBps: number;
 };
+
+function salesEnhancementsFromInvoice(
+  invoice: InvoiceDetails,
+): SalesEnhancementForm {
+  const paymentTermsCode =
+    invoice.payment_terms.code ??
+    "DUE_ON_RECEIPT";
+
+  return {
+    dueDate:
+      invoice.due_date ??
+      invoice.document_date,
+
+    paymentTermsCode,
+
+    paymentTermsCustom:
+      invoice.payment_terms.custom ?? "",
+
+    customerPoNumber:
+      invoice.customer_po_number ?? "",
+
+    referenceNumber:
+      invoice.reference_number ?? "",
+
+    /*
+     * Legacy rows have null here. Treat them as
+     * Same as Bill To in the UI without changing
+     * the database merely by viewing the document.
+     */
+    shipToSameAsBillTo:
+      invoice.ship_to.same_as_bill_to !== false,
+
+    shipTo: {
+      name:
+        invoice.ship_to.name ?? "",
+      contact_person:
+        invoice.ship_to.contact_person ?? "",
+      gstin:
+        invoice.ship_to.gstin ?? "",
+      phone:
+        invoice.ship_to.phone ?? "",
+      email:
+        invoice.ship_to.email ?? "",
+      address_line1:
+        invoice.ship_to.address_line1 ?? "",
+      address_line2:
+        invoice.ship_to.address_line2 ?? "",
+      city:
+        invoice.ship_to.city ?? "",
+      state:
+        invoice.ship_to.state ?? "",
+      state_code:
+        invoice.ship_to.state_code ?? "",
+      pincode:
+        invoice.ship_to.pincode ?? "",
+      country:
+        invoice.ship_to.country ?? "India",
+    },
+
+    additionalChargeLabel:
+      invoice.additional_charge.label ?? "",
+
+    additionalChargePaise:
+      invoice.additional_charge.amount_paise,
+
+    additionalChargeTaxable:
+      invoice.additional_charge.taxable,
+
+    /*
+     * -1 is the UI sentinel for "no GST rate selected".
+     * Explicit taxable 0% remains a valid 0 value.
+     */
+    additionalChargeGstRateBps:
+      invoice.additional_charge.taxable
+        ? invoice.additional_charge.gst_rate_bps
+        : -1,
+  };
+}
 
 export default function SalesDocumentEdit() {
   const navigate = useNavigate();
@@ -61,6 +150,11 @@ export default function SalesDocumentEdit() {
   const [error, setError] = useState("");
 
   const [documentDate, setDocumentDate] = useState("");
+
+  const [salesEnhancements, setSalesEnhancements] =
+    useState<SalesEnhancementForm>(
+      () => newSalesEnhancementForm(""),
+    );
 
   const [isSaving, setIsSaving] = useState(false);
 
@@ -109,6 +203,13 @@ export default function SalesDocumentEdit() {
 
         setDocument(response);
         setDocumentDate(response.document_date);
+
+        if (!isPurchaseRoute) {
+          setSalesEnhancements(
+            salesEnhancementsFromInvoice(response),
+          );
+        }
+
         setCustomerId(response.party?.id ?? "");
         setPlaceOfSupplyStateCode(response.place_of_supply.state_code ?? "");
         setItems(
@@ -137,7 +238,7 @@ export default function SalesDocumentEdit() {
     }
 
     void loadDocument();
-  }, [id]);
+  }, [id, isPurchaseRoute]);
 
   useEffect(() => {
     async function loadParties() {
@@ -254,6 +355,38 @@ export default function SalesDocumentEdit() {
     ]);
   }
 
+  function handleDocumentDateChange(
+    nextDate: string,
+  ) {
+    if (!isPurchaseRoute) {
+      setSalesEnhancements((current) => {
+        const previousAutoDueDate =
+          current.paymentTermsCode === "CUSTOM"
+            ? ""
+            : dueDateForTerms(
+                documentDate,
+                current.paymentTermsCode,
+              );
+
+        const shouldMoveDueDate =
+          current.paymentTermsCode !== "CUSTOM" &&
+          current.dueDate === previousAutoDueDate;
+
+        return {
+          ...current,
+          dueDate: shouldMoveDueDate
+            ? dueDateForTerms(
+                nextDate,
+                current.paymentTermsCode,
+              )
+            : current.dueDate,
+        };
+      });
+    }
+
+    setDocumentDate(nextDate);
+  }
+
   const selectedActiveParty =
     parties.find((party) => party.id === customerId) ?? null;
 
@@ -272,26 +405,51 @@ export default function SalesDocumentEdit() {
           display_name:
             document.party.display_name ??
             (isPurchaseRoute ? "Inactive Vendor" : "Inactive Customer"),
-          gstin: document.party.gstin,
-          state_code: documentPartyStateCode,
+          legal_name:
+            document.party.legal_name,
+          gstin:
+            document.party.gstin,
+          email:
+            document.party.email,
+          phone:
+            document.party.phone,
+          addresses:
+            document.party.addresses,
+          state_code:
+            documentPartyStateCode,
         }
       : null);
 
   const liveTotals = items.reduce(
     (totals, item) => {
-      const grossPaise = getGrossPaise(item.quantity, item.ratePaise);
+      const grossPaise =
+        getGrossPaise(
+          item.quantity,
+          item.ratePaise,
+        );
 
-      const taxablePaise = getTaxableAmountPaise(
-        item.quantity,
-        item.ratePaise,
-        item.discountPaise,
-      );
+      const taxablePaise =
+        getTaxableAmountPaise(
+          item.quantity,
+          item.ratePaise,
+          item.discountPaise,
+        );
 
-      const discountPaise = grossPaise - taxablePaise;
+      const discountPaise =
+        grossPaise - taxablePaise;
 
-      const gstPaise = getGstPaise(taxablePaise, item.gstRateBps);
+      const gstPaise =
+        getGstPaise(
+          taxablePaise,
+          item.gstRateBps,
+        );
 
-      const cessPaise = Math.floor((taxablePaise * item.cessRateBps) / 10000);
+      const cessPaise =
+        Math.floor(
+          (taxablePaise *
+            item.cessRateBps) /
+            10000,
+        );
 
       totals.grossPaise += grossPaise;
       totals.discountPaise += discountPaise;
@@ -310,29 +468,110 @@ export default function SalesDocumentEdit() {
     },
   );
 
-  const liveGrandTotalPaise =
-    liveTotals.taxablePaise + liveTotals.gstPaise + liveTotals.cessPaise;
-
-  const supplierStateCode = getDocumentSupplierStateCode(
-    isPurchaseRoute ? "PURCHASE" : "SALES",
-    company,
-    selectedParty,
-  );
+  const supplierStateCode =
+    getDocumentSupplierStateCode(
+      isPurchaseRoute
+        ? "PURCHASE"
+        : "SALES",
+      company,
+      selectedParty,
+    );
 
   const hasTaxLocation =
-    supplierStateCode !== "" && placeOfSupplyStateCode !== "";
+    supplierStateCode !== "" &&
+    placeOfSupplyStateCode !== "";
 
   const isInterState =
-    hasTaxLocation && supplierStateCode !== placeOfSupplyStateCode;
+    hasTaxLocation &&
+    supplierStateCode !==
+      placeOfSupplyStateCode;
+
+  const isIntraState =
+    hasTaxLocation &&
+    !isInterState;
 
   const liveCgstPaise =
-    hasTaxLocation && !isInterState ? Math.floor(liveTotals.gstPaise / 2) : 0;
+    hasTaxLocation && !isInterState
+      ? Math.floor(
+          liveTotals.gstPaise / 2,
+        )
+      : 0;
 
   const liveSgstPaise =
-    hasTaxLocation && !isInterState ? liveTotals.gstPaise - liveCgstPaise : 0;
+    hasTaxLocation && !isInterState
+      ? liveTotals.gstPaise -
+        liveCgstPaise
+      : 0;
 
   const liveIgstPaise =
-    hasTaxLocation && isInterState ? liveTotals.gstPaise : 0;
+    hasTaxLocation && isInterState
+      ? liveTotals.gstPaise
+      : 0;
+
+  const liveGrandTotalPaise =
+    liveTotals.taxablePaise +
+    liveTotals.gstPaise +
+    liveTotals.cessPaise;
+
+  const salesPreview =
+    !isPurchaseRoute
+      ? calculateDocumentPreview(
+          items.map((item) => ({
+            quantity:
+              item.quantity,
+            ratePaise:
+              item.ratePaise,
+            discountPaise:
+              item.discountPaise,
+            gstRateBps:
+              item.gstRateBps,
+            cessRateBps:
+              item.cessRateBps,
+          })),
+          isIntraState,
+          salesEnhancements,
+        )
+      : null;
+
+  const displayGrossPaise =
+    salesPreview?.grossPaise ??
+    liveTotals.grossPaise;
+
+  const displayDiscountPaise =
+    salesPreview?.discountPaise ??
+    liveTotals.discountPaise;
+
+  const displayTaxablePaise =
+    salesPreview?.taxablePaise ??
+    liveTotals.taxablePaise;
+
+  const displayGstPaise =
+    salesPreview?.gstPaise ??
+    liveTotals.gstPaise;
+
+  const displayCgstPaise =
+    salesPreview?.cgstPaise ??
+    liveCgstPaise;
+
+  const displaySgstPaise =
+    salesPreview?.sgstPaise ??
+    liveSgstPaise;
+
+  const displayIgstPaise =
+    salesPreview?.igstPaise ??
+    liveIgstPaise;
+
+  const displayCessPaise =
+    salesPreview?.cessPaise ??
+    liveTotals.cessPaise;
+
+  const displayAdditionalChargePaise =
+    salesPreview?.additionalChargePaise ??
+    0;
+
+  const displayGrandTotalPaise =
+    salesPreview?.totalPaise ??
+    liveGrandTotalPaise;
 
   async function handleSave() {
     if (isSaving) return;
@@ -361,6 +600,21 @@ export default function SalesDocumentEdit() {
     if (!placeOfSupplyStateCode) {
       setSaveError("Please select a Place of Supply.");
       return;
+    }
+
+    if (!isPurchaseRoute) {
+      const enhancementError =
+        validateSalesEnhancements(
+          salesEnhancements,
+          documentDate,
+        );
+
+      if (enhancementError) {
+        setSaveError(
+          enhancementError,
+        );
+        return;
+      }
     }
 
     if (items.length === 0) {
@@ -429,14 +683,46 @@ export default function SalesDocumentEdit() {
 
     try {
       await updateDocument(id, {
-        document_date: documentDate,
-        party_id: customerId,
-        place_of_supply_state: placeOfSupply.name,
-        place_of_supply_state_code: placeOfSupply.code,
-        items: documentItems,
-        notes: notes.trim() || null,
+        document_date:
+          documentDate,
 
-        terms_and_conditions: termsAndConditions.trim() || null,
+        party_id:
+          customerId,
+
+        place_of_supply_state:
+          placeOfSupply.name,
+
+        place_of_supply_state_code:
+          placeOfSupply.code,
+
+        items:
+          documentItems,
+
+        notes:
+          notes.trim() || null,
+
+        terms_and_conditions:
+          termsAndConditions.trim() || null,
+
+        ...(
+          isPurchaseRoute
+            ? {}
+            : {
+                due_date:
+                  salesEnhancements.dueDate ||
+                  null,
+
+                reference_number:
+                  salesEnhancements
+                    .referenceNumber
+                    .trim() ||
+                  null,
+
+                ...toSalesEnhancementUpdateRequest(
+                  salesEnhancements,
+                ),
+              }
+        ),
       });
 
       notify({
@@ -444,8 +730,6 @@ export default function SalesDocumentEdit() {
         title: "Draft updated successfully",
         description: `${document.document_number} has been saved. You can review it before issuing.`,
       });
-
-      navigate(`${basePath}/${id}`);
 
       navigate(`${basePath}/${id}`);
     } catch (error) {
@@ -532,7 +816,11 @@ export default function SalesDocumentEdit() {
             id="document-date"
             type="date"
             value={documentDate}
-            onChange={(event) => setDocumentDate(event.target.value)}
+            onChange={(event) =>
+              handleDocumentDateChange(
+                event.target.value,
+              )
+            }
             className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-500"
           />
 
@@ -626,6 +914,23 @@ export default function SalesDocumentEdit() {
             </select>
           </div>
         </div>
+
+        {!isPurchaseRoute && (
+          <div className="mt-6 space-y-6">
+            <SalesInvoiceFields
+              value={salesEnhancements}
+              onChange={
+                setSalesEnhancements
+              }
+              documentDate={
+                documentDate
+              }
+              billTo={
+                selectedParty
+              }
+            />
+          </div>
+        )}
 
         <section className="mt-6 overflow-hidden rounded-lg border border-slate-200 bg-white">
           <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
@@ -873,12 +1178,21 @@ export default function SalesDocumentEdit() {
           </h2>
 
           <div className="mt-6 space-y-5">
+
+            {!isPurchaseRoute && (
+              <SalesChargeEditor
+                value={salesEnhancements}
+                onChange={
+                  setSalesEnhancements
+                }
+              />
+            )}
             <div>
               <label
                 htmlFor="notes"
                 className="mb-2 block text-sm font-medium text-slate-700"
               >
-                Notes
+                {isPurchaseRoute ? "Notes" : "Customer Notes"}
               </label>
 
               <textarea
@@ -922,61 +1236,78 @@ export default function SalesDocumentEdit() {
             <div className="flex justify-between text-slate-600">
               <span>Gross Amount</span>
 
-              <span>₹{(liveTotals.grossPaise / 100).toFixed(2)}</span>
+              <span>₹{(displayGrossPaise / 100).toFixed(2)}</span>
             </div>
 
             <div className="flex justify-between text-slate-600">
               <span>Discount</span>
 
-              <span>- ₹{(liveTotals.discountPaise / 100).toFixed(2)}</span>
+              <span>- ₹{(displayDiscountPaise / 100).toFixed(2)}</span>
             </div>
+
+            {!isPurchaseRoute &&
+              displayAdditionalChargePaise > 0 && (
+                <div className="flex justify-between text-slate-600">
+                  <span>
+                    {salesEnhancements.additionalChargeLabel.trim() ||
+                      "Additional Charge"}
+                  </span>
+
+                  <span>
+                    ₹{(
+                      displayAdditionalChargePaise /
+                      100
+                    ).toFixed(2)}
+                  </span>
+                </div>
+              )}
 
             <div className="flex justify-between border-t border-slate-200 pt-3 text-slate-700">
               <span>Taxable Amount</span>
 
-              <span>₹{(liveTotals.taxablePaise / 100).toFixed(2)}</span>
+              <span>₹{(displayTaxablePaise / 100).toFixed(2)}</span>
             </div>
 
             {!hasTaxLocation ? (
               <div className="flex justify-between text-slate-600">
                 <span>Total GST</span>
 
-                <span>₹{(liveTotals.gstPaise / 100).toFixed(2)}</span>
+                <span>₹{(displayGstPaise / 100).toFixed(2)}</span>
               </div>
             ) : isInterState ? (
               <div className="flex justify-between text-slate-600">
                 <span>IGST</span>
 
-                <span>₹{(liveIgstPaise / 100).toFixed(2)}</span>
+                <span>₹{(displayIgstPaise / 100).toFixed(2)}</span>
               </div>
             ) : (
               <>
                 <div className="flex justify-between text-slate-600">
                   <span>CGST</span>
 
-                  <span>₹{(liveCgstPaise / 100).toFixed(2)}</span>
+                  <span>₹{(displayCgstPaise / 100).toFixed(2)}</span>
                 </div>
 
                 <div className="flex justify-between text-slate-600">
                   <span>SGST</span>
 
-                  <span>₹{(liveSgstPaise / 100).toFixed(2)}</span>
+                  <span>₹{(displaySgstPaise / 100).toFixed(2)}</span>
                 </div>
               </>
             )}
 
-            {liveTotals.cessPaise > 0 && (
+            {displayCessPaise > 0 && (
               <div className="flex justify-between text-slate-600">
                 <span>Cess</span>
 
-                <span>₹{(liveTotals.cessPaise / 100).toFixed(2)}</span>
+                <span>₹{(displayCessPaise / 100).toFixed(2)}</span>
               </div>
             )}
 
             <div className="flex justify-between border-t border-slate-200 pt-3 text-base font-semibold text-slate-900">
               <span>Total</span>
 
-              <span>₹{(liveGrandTotalPaise / 100).toFixed(2)}</span>
+              <span>₹{(displayGrandTotalPaise / 100).toFixed(2)}</span>
             </div>
           </div>
         </section>

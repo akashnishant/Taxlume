@@ -5,6 +5,10 @@ import { validateDocumentForIssuance } from "../utils/documents/validation";
 import { prepareAuditLog } from "../utils/audit/auditLog";
 import { calculateDocument } from "../utils/documents/calculateDocument";
 import {
+    getDefaultPrefix,
+    getFinancialYear,
+} from "../utils/documents/numberGenerator";
+import {
     copyDocumentAsset,
     type CompanySnapshot,
     type PartySnapshot,
@@ -24,8 +28,24 @@ type DocumentRow = {
     company_id: string;
     document_type: string;
     document_number: string;
+    document_date: string;
+    due_date: string | null;
     status: "DRAFT" | "ISSUED" | "CANCELLED";
     party_id: string | null;
+
+    payment_terms_code: string | null;
+    payment_terms_custom: string | null;
+
+    ship_to_same_as_bill_to: number | null;
+    ship_to_name: string | null;
+    ship_to_address_line1: string | null;
+
+    additional_charge_paise: number;
+    additional_charge_taxable: number;
+    additional_charge_gst_rate_bps: number;
+    additional_charge_cgst_paise: number;
+    additional_charge_sgst_paise: number;
+    additional_charge_igst_paise: number;
     subtotal_paise: number;
     discount_paise: number;
     taxable_amount_paise: number;
@@ -157,8 +177,24 @@ export class DocumentStatus extends OpenAPIRoute {
                         company_id,
                         document_type,
                         document_number,
+                        document_date,
+                        due_date,
                         status,
                         party_id,
+                        payment_terms_code,
+                        payment_terms_custom,
+
+                        ship_to_same_as_bill_to,
+                        ship_to_name,
+                        ship_to_address_line1,
+
+                        additional_charge_paise,
+                        additional_charge_taxable,
+                        additional_charge_gst_rate_bps,
+                        additional_charge_cgst_paise,
+                        additional_charge_sgst_paise,
+                        additional_charge_igst_paise,
+
                         subtotal_paise,
                         discount_paise,
                         taxable_amount_paise,
@@ -192,8 +228,7 @@ export class DocumentStatus extends OpenAPIRoute {
 
         const validTransition =
             (currentStatus === "DRAFT" &&
-                (requestedStatus === "ISSUED" ||
-                    requestedStatus === "CANCELLED")) ||
+                requestedStatus === "ISSUED") ||
             (currentStatus === "ISSUED" &&
                 requestedStatus === "CANCELLED");
 
@@ -247,7 +282,22 @@ export class DocumentStatus extends OpenAPIRoute {
          * document rather than issue a new one.
          */
 
+        const needsOfficialNumber =
+            currentStatus === "DRAFT" &&
+            requestedStatus === "ISSUED" &&
+            document.document_number ===
+                `DRAFT-${document.id}`;
+
         let snapshotStatement: D1PreparedStatement | null = null;
+
+        let sequenceEnsureStatement:
+            D1PreparedStatement | null = null;
+
+        let sequenceAdvanceStatement:
+            D1PreparedStatement | null = null;
+
+        let issuanceFinancialYear:
+            string | null = null;
 
         let copiedSignatureKey: string | null = null;
         let copiedPaymentQrKey: string | null = null;
@@ -500,6 +550,65 @@ export class DocumentStatus extends OpenAPIRoute {
                 supplierStateCode ===
                 document.place_of_supply_state_code;
 
+            if (
+                document.due_date &&
+                document.due_date < document.document_date
+            ) {
+                return c.json(
+                    {
+                        success: false,
+                        message:
+                            "Due date cannot be before the document date.",
+                    },
+                    400,
+                );
+            }
+
+            if (
+                document.payment_terms_code === "CUSTOM" &&
+                !document.payment_terms_custom?.trim()
+            ) {
+                return c.json(
+                    {
+                        success: false,
+                        message:
+                            "Custom payment terms are required when Payment Terms is Custom.",
+                    },
+                    400,
+                );
+            }
+
+            if (
+                document.ship_to_same_as_bill_to === 0 &&
+                (
+                    !document.ship_to_name?.trim() ||
+                    !document.ship_to_address_line1?.trim()
+                )
+            ) {
+                return c.json(
+                    {
+                        success: false,
+                        message:
+                            "Ship To name and address are required when Ship To is different from Bill To.",
+                    },
+                    400,
+                );
+            }
+
+            if (
+                document.additional_charge_taxable !== 1 &&
+                document.additional_charge_gst_rate_bps > 0
+            ) {
+                return c.json(
+                    {
+                        success: false,
+                        message:
+                            "Additional Charge GST rate must be 0 when the charge is non-taxable.",
+                    },
+                    400,
+                );
+            }
+
             const recalculated =
                 calculateDocument(
                     itemRows.results.map((item) => ({
@@ -510,6 +619,14 @@ export class DocumentStatus extends OpenAPIRoute {
                         cess_rate_bps: item.cess_rate_bps,
                     })),
                     isIntraState,
+                    {
+                        amount_paise:
+                            document.additional_charge_paise,
+                        taxable:
+                            document.additional_charge_taxable === 1,
+                        gst_rate_bps:
+                            document.additional_charge_gst_rate_bps,
+                    },
                 );
             
             const lineItemsMismatch =
@@ -561,6 +678,18 @@ export class DocumentStatus extends OpenAPIRoute {
                     recalculated.igstPaise ||
                 document.cess_paise !==
                     recalculated.cessPaise ||
+
+                document.additional_charge_paise !==
+                    recalculated.additionalChargePaise ||
+                document.additional_charge_gst_rate_bps !==
+                    recalculated.additionalChargeGstRateBps ||
+                document.additional_charge_cgst_paise !==
+                    recalculated.additionalChargeCgstPaise ||
+                document.additional_charge_sgst_paise !==
+                    recalculated.additionalChargeSgstPaise ||
+                document.additional_charge_igst_paise !==
+                    recalculated.additionalChargeIgstPaise ||
+
                 document.total_paise !==
                     recalculated.totalPaise;
 
@@ -569,7 +698,7 @@ export class DocumentStatus extends OpenAPIRoute {
                     {
                         success: false,
                         message:
-                            "Document totals do not match the calculated totals from its items.",
+                            "Document totals do not match the calculated totals from its items and additional charges.",
                     },
                     400,
                 );
@@ -687,6 +816,126 @@ export class DocumentStatus extends OpenAPIRoute {
             const issuedAt =
                 new Date().toISOString();
 
+            if (needsOfficialNumber) {
+                const issuanceDate =
+                    new Date(
+                        `${document.document_date}T00:00:00.000Z`,
+                    );
+
+                issuanceFinancialYear =
+                    getFinancialYear(
+                        issuanceDate,
+                    );
+
+                const defaultPrefix =
+                    getDefaultPrefix(
+                        document.document_type,
+                    );
+
+                /*
+                 * Create the sequence only if it does not yet exist.
+                 *
+                 * next_number starts at 1 here. The following
+                 * sequenceAdvanceStatement increments it to 2,
+                 * making 1 the number allocated to this issuance.
+                 *
+                 * For an existing sequence (for example the current
+                 * TAX_INVOICE sequence at 16), this statement is a
+                 * no-op and the following statement advances 16 -> 17.
+                 */
+                sequenceEnsureStatement =
+                    c.env.DB
+                        .prepare(`
+                            INSERT INTO document_number_sequences (
+                                id,
+                                company_id,
+                                document_type,
+                                financial_year,
+                                prefix,
+                                suffix,
+                                next_number,
+                                padding,
+                                created_at,
+                                updated_at
+                            )
+                            SELECT
+                                ?,
+                                ?,
+                                ?,
+                                ?,
+                                ?,
+                                '',
+                                1,
+                                4,
+                                ?,
+                                ?
+                            WHERE EXISTS (
+                                SELECT 1
+                                FROM documents
+                                WHERE id = ?
+                                    AND company_id = ?
+                                    AND status = 'DRAFT'
+                                    AND document_number = ?
+                            )
+                            ON CONFLICT (
+                                company_id,
+                                document_type,
+                                financial_year
+                            )
+                            DO NOTHING
+                        `)
+                        .bind(
+                            crypto.randomUUID(),
+                            companyId,
+                            document.document_type,
+                            issuanceFinancialYear,
+                            defaultPrefix,
+                            issuedAt,
+                            issuedAt,
+                            document.id,
+                            companyId,
+                            document.document_number,
+                        );
+
+                /*
+                 * Allocation occurs inside the same D1 batch as
+                 * document issuance.
+                 *
+                 * If a later statement in that batch fails, the
+                 * sequence change is rolled back together with the
+                 * issuance.
+                 */
+                sequenceAdvanceStatement =
+                    c.env.DB
+                        .prepare(`
+                            UPDATE document_number_sequences
+                            SET
+                                next_number =
+                                    next_number + 1,
+                                updated_at = ?
+                            WHERE company_id = ?
+                                AND document_type = ?
+                                AND financial_year = ?
+                                AND EXISTS (
+                                    SELECT 1
+                                    FROM documents
+                                    WHERE id = ?
+                                        AND company_id = ?
+                                        AND status = 'DRAFT'
+                                        AND document_number = ?
+                                )
+                        `)
+                        .bind(
+                            issuedAt,
+                            companyId,
+                            document.document_type,
+                            issuanceFinancialYear,
+                            document.id,
+                            companyId,
+                            document.document_number,
+                        );
+            }
+
             snapshotStatement =
                 c.env.DB
                     .prepare(`
@@ -724,24 +973,103 @@ export class DocumentStatus extends OpenAPIRoute {
 
         const now = new Date().toISOString();
 
+        if (
+            needsOfficialNumber &&
+            (
+                !sequenceEnsureStatement ||
+                !sequenceAdvanceStatement ||
+                !issuanceFinancialYear
+            )
+        ) {
+            /*
+             * This guard appears before cleanupCopiedSnapshotAssets
+             * is declared below, so perform the same best-effort
+             * R2 cleanup inline if this invariant ever fails.
+             */
+            if (copiedSignatureKey) {
+                try {
+                    await c.env.billdesk_files.delete(
+                        copiedSignatureKey,
+                    );
+                } catch {
+                    // Best-effort cleanup only.
+                }
+            }
+
+            if (copiedPaymentQrKey) {
+                try {
+                    await c.env.billdesk_files.delete(
+                        copiedPaymentQrKey,
+                    );
+                } catch {
+                    // Best-effort cleanup only.
+                }
+            }
+
+            throw new Error(
+                "Official document number allocation was not prepared.",
+            );
+        }
+
         const statusUpdateStatement =
-    c.env.DB
-        .prepare(`
-            UPDATE documents
-            SET
-                status = ?,
-                updated_at = ?
-            WHERE id = ?
-                AND company_id = ?
-                AND status = ?
-        `)
-        .bind(
-            requestedStatus,
-            now,
-            id,
-            companyId,
-            currentStatus,
-        );
+            needsOfficialNumber
+                ? c.env.DB
+                    .prepare(`
+                        UPDATE documents
+                        SET
+                            document_number = (
+                                SELECT
+                                    COALESCE(prefix, '') ||
+                                    '-' ||
+                                    financial_year ||
+                                    '-' ||
+                                    printf(
+                                        '%0*d',
+                                        padding,
+                                        next_number - 1
+                                    ) ||
+                                    COALESCE(suffix, '')
+                                FROM document_number_sequences
+                                WHERE company_id = ?
+                                    AND document_type = ?
+                                    AND financial_year = ?
+                                LIMIT 1
+                            ),
+                            status = ?,
+                            updated_at = ?
+                        WHERE id = ?
+                            AND company_id = ?
+                            AND status = ?
+                            AND document_number = ?
+                    `)
+                    .bind(
+                        companyId,
+                        document.document_type,
+                        issuanceFinancialYear,
+                        requestedStatus,
+                        now,
+                        id,
+                        companyId,
+                        currentStatus,
+                        document.document_number,
+                    )
+                : c.env.DB
+                    .prepare(`
+                        UPDATE documents
+                        SET
+                            status = ?,
+                            updated_at = ?
+                        WHERE id = ?
+                            AND company_id = ?
+                            AND status = ?
+                    `)
+                    .bind(
+                        requestedStatus,
+                        now,
+                        id,
+                        companyId,
+                        currentStatus,
+                    );
 
         const auditStatement =
             prepareAuditLog(c.env.DB, {
@@ -753,21 +1081,32 @@ export class DocumentStatus extends OpenAPIRoute {
                 metadata: {
                     document_type: document.document_type,
                     document_number: document.document_number,
+                    official_number_assigned_on_issue:
+                        needsOfficialNumber,
                     previous_status: currentStatus,
                     new_status: requestedStatus,
                 },
             });
 
-        const statements = snapshotStatement
-            ? [
-                statusUpdateStatement,
-                snapshotStatement,
-                auditStatement,
-            ]
-            : [
-                statusUpdateStatement,
-                auditStatement,
-            ];
+        const statements =
+            needsOfficialNumber
+                ? [
+                    sequenceEnsureStatement!,
+                    sequenceAdvanceStatement!,
+                    statusUpdateStatement,
+                    snapshotStatement!,
+                    auditStatement,
+                ]
+                : snapshotStatement
+                    ? [
+                        statusUpdateStatement,
+                        snapshotStatement,
+                        auditStatement,
+                    ]
+                    : [
+                        statusUpdateStatement,
+                        auditStatement,
+                    ];
 
         const cleanupCopiedSnapshotAssets =
             async () => {
@@ -824,18 +1163,36 @@ export class DocumentStatus extends OpenAPIRoute {
             throw error;
         }
 
-        const statusResult =
-            results[0];
+        const sequenceEnsureResult =
+            needsOfficialNumber
+                ? results[0]
+                : null;
 
-        const snapshotResult =
-            snapshotStatement
+        const sequenceAdvanceResult =
+            needsOfficialNumber
                 ? results[1]
                 : null;
 
-        const auditResult =
-            snapshotStatement
+        const statusResult =
+            needsOfficialNumber
                 ? results[2]
-                : results[1];
+                : results[0];
+
+        const snapshotResult =
+            snapshotStatement
+                ? (
+                    needsOfficialNumber
+                        ? results[3]
+                        : results[1]
+                )
+                : null;
+
+        const auditResult =
+            needsOfficialNumber
+                ? results[4]
+                : snapshotStatement
+                    ? results[2]
+                    : results[1];
 
         if (
             !statusResult ||
@@ -843,6 +1200,16 @@ export class DocumentStatus extends OpenAPIRoute {
             !statusResult.success ||
             statusResult.meta.changes !== 1 ||
             !auditResult.success ||
+            (
+                needsOfficialNumber &&
+                (
+                    !sequenceEnsureResult ||
+                    !sequenceEnsureResult.success ||
+                    !sequenceAdvanceResult ||
+                    !sequenceAdvanceResult.success ||
+                    sequenceAdvanceResult.meta.changes !== 1
+                )
+            ) ||
             (snapshotStatement &&
                 (!snapshotResult ||
                     !snapshotResult.success ||
@@ -859,10 +1226,40 @@ export class DocumentStatus extends OpenAPIRoute {
             );
         }
 
+        let resultingDocumentNumber =
+            document.document_number;
+
+        if (requestedStatus === "ISSUED") {
+            const issuedDocument =
+                await c.env.DB
+                    .prepare(`
+                        SELECT document_number
+                        FROM documents
+                        WHERE id = ?
+                            AND company_id = ?
+                            AND status = 'ISSUED'
+                        LIMIT 1
+                    `)
+                    .bind(
+                        id,
+                        companyId,
+                    )
+                    .first<{
+                        document_number: string;
+                    }>();
+
+            if (issuedDocument) {
+                resultingDocumentNumber =
+                    issuedDocument.document_number;
+            }
+        }
+
         return c.json({
             success: true,
             document: {
                 id,
+                document_number:
+                    resultingDocumentNumber,
                 previous_status: currentStatus,
                 status: requestedStatus,
                 updated_by: userId,

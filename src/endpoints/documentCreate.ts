@@ -1,7 +1,6 @@
 import { OpenAPIRoute } from "chanfana";
 import { z } from "zod";
 import { type AppContext } from "../types";
-import { generateDocumentNumber } from "../utils/documents/numberGenerator";
 import { createAuditLog } from "../utils/audit/auditLog";
 import {
     calculateDocument,
@@ -35,6 +34,16 @@ const DocumentItemRequest = z
         }
     });
 
+const PaymentTermsCode = z.enum([
+    "DUE_ON_RECEIPT",
+    "NET_7",
+    "NET_15",
+    "NET_30",
+    "NET_45",
+    "NET_60",
+    "CUSTOM",
+]);
+
 const DocumentCreateRequest = z.object({
     document_type: z.enum([
         "TAX_INVOICE",
@@ -53,6 +62,35 @@ const DocumentCreateRequest = z.object({
     notes: z.string().max(10000).optional(),
     terms_and_conditions: z.string().max(10000).optional(),
     reference_number: z.string().max(100).optional(),
+
+    payment_terms_code: PaymentTermsCode.optional(),
+    payment_terms_custom: z.string().trim().max(500).optional(),
+    customer_po_number: z.string().trim().max(100).optional(),
+
+    ship_to_same_as_bill_to: z.boolean().optional(),
+    ship_to_name: z.string().trim().max(200).optional(),
+    ship_to_contact_person: z.string().trim().max(200).optional(),
+    ship_to_gstin: z.string().trim().max(20).optional(),
+    ship_to_phone: z.string().trim().max(50).optional(),
+    ship_to_email: z.string().trim().max(320).optional(),
+    ship_to_address_line1: z.string().trim().max(500).optional(),
+    ship_to_address_line2: z.string().trim().max(500).optional(),
+    ship_to_city: z.string().trim().max(100).optional(),
+    ship_to_state: z.string().trim().max(100).optional(),
+    ship_to_state_code: z.string().trim().max(10).optional(),
+    ship_to_pincode: z.string().trim().max(20).optional(),
+    ship_to_country: z.string().trim().max(100).optional(),
+
+    additional_charge_label: z.string().trim().max(100).optional(),
+    additional_charge_paise: z.number().int().nonnegative().default(0),
+    additional_charge_taxable: z.boolean().default(false),
+    additional_charge_gst_rate_bps: z
+        .number()
+        .int()
+        .min(0)
+        .max(10000)
+        .default(0),
+
     items: z.array(DocumentItemRequest).min(1).max(500),
         }).superRefine((document, ctx) => {
             const state =
@@ -60,6 +98,62 @@ const DocumentCreateRequest = z.object({
 
             const stateCode =
                 document.place_of_supply_state_code?.trim() ?? "";
+
+            if (
+                document.due_date &&
+                document.due_date < document.document_date
+            ) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    path: ["due_date"],
+                    message:
+                        "Due date cannot be before the document date.",
+                });
+            }
+
+            if (
+                document.payment_terms_code === "CUSTOM" &&
+                !document.payment_terms_custom?.trim()
+            ) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    path: ["payment_terms_custom"],
+                    message:
+                        "Custom payment terms are required when Payment Terms is Custom.",
+                });
+            }
+
+            if (document.ship_to_same_as_bill_to === false) {
+                if (!document.ship_to_name?.trim()) {
+                    ctx.addIssue({
+                        code: z.ZodIssueCode.custom,
+                        path: ["ship_to_name"],
+                        message:
+                            "Ship To name is required when Ship To is different from Bill To.",
+                    });
+                }
+
+                if (!document.ship_to_address_line1?.trim()) {
+                    ctx.addIssue({
+                        code: z.ZodIssueCode.custom,
+                        path: ["ship_to_address_line1"],
+                        message:
+                            "Ship To address is required when Ship To is different from Bill To.",
+                    });
+                }
+            }
+
+            if (
+                !document.additional_charge_taxable &&
+                document.additional_charge_gst_rate_bps > 0
+            ) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    path: ["additional_charge_gst_rate_bps"],
+                    message:
+                        "Additional Charge GST rate must be 0 when the charge is non-taxable.",
+                });
+            }
 
             if (!state && !stateCode) {
                 return;
@@ -394,6 +488,14 @@ export class DocumentCreate extends OpenAPIRoute {
             calculateDocument(
                 calculatedItemsInput,
                 isIntraState,
+                {
+                    amount_paise:
+                        body.additional_charge_paise,
+                    taxable:
+                        body.additional_charge_taxable,
+                    gst_rate_bps:
+                        body.additional_charge_gst_rate_bps,
+                },
             );
 
         const calculatedItems =
@@ -412,25 +514,28 @@ export class DocumentCreate extends OpenAPIRoute {
             sgstPaise,
             igstPaise,
             cessPaise,
+            additionalChargePaise,
+            additionalChargeGstRateBps,
+            additionalChargeCgstPaise,
+            additionalChargeSgstPaise,
+            additionalChargeIgstPaise,
             totalPaise,
         } = calculation;
 
-        const documentDate =
-            new Date(
-                `${body.document_date}T00:00:00.000Z`,
-            );
-
-        const {
-            documentNumber,
-        } = await generateDocumentNumber(
-            c.env.DB,
-            companyId,
-            body.document_type,
-            documentDate,
-        );
-
         const documentId =
             crypto.randomUUID();
+
+        /*
+         * A DRAFT must not consume an official document sequence.
+         *
+         * document_number remains NOT NULL / UNIQUE in the database,
+         * therefore drafts use an internal unique placeholder.
+         *
+         * The placeholder is replaced by the official number only
+         * during DRAFT -> ISSUED.
+         */
+        const documentNumber =
+            `DRAFT-${documentId}`;
 
         const now =
             new Date().toISOString();
@@ -531,8 +636,78 @@ export class DocumentCreate extends OpenAPIRoute {
                     now,
                 );
 
+        const documentEnhancementUpdate =
+            c.env.DB.prepare(`
+                UPDATE documents
+                SET
+                    payment_terms_code = ?,
+                    payment_terms_custom = ?,
+                    customer_po_number = ?,
+
+                    ship_to_same_as_bill_to = ?,
+                    ship_to_name = ?,
+                    ship_to_contact_person = ?,
+                    ship_to_gstin = ?,
+                    ship_to_phone = ?,
+                    ship_to_email = ?,
+                    ship_to_address_line1 = ?,
+                    ship_to_address_line2 = ?,
+                    ship_to_city = ?,
+                    ship_to_state = ?,
+                    ship_to_state_code = ?,
+                    ship_to_pincode = ?,
+                    ship_to_country = ?,
+
+                    additional_charge_label = ?,
+                    additional_charge_paise = ?,
+                    additional_charge_taxable = ?,
+                    additional_charge_gst_rate_bps = ?,
+                    additional_charge_cgst_paise = ?,
+                    additional_charge_sgst_paise = ?,
+                    additional_charge_igst_paise = ?
+                WHERE id = ?
+                    AND company_id = ?
+                    AND status = 'DRAFT'
+            `).bind(
+                body.payment_terms_code ?? null,
+                body.payment_terms_code === "CUSTOM"
+                    ? body.payment_terms_custom?.trim() || null
+                    : null,
+                body.customer_po_number?.trim() || null,
+
+                body.ship_to_same_as_bill_to === undefined
+                    ? null
+                    : body.ship_to_same_as_bill_to
+                        ? 1
+                        : 0,
+                body.ship_to_name?.trim() || null,
+                body.ship_to_contact_person?.trim() || null,
+                body.ship_to_gstin?.trim() || null,
+                body.ship_to_phone?.trim() || null,
+                body.ship_to_email?.trim() || null,
+                body.ship_to_address_line1?.trim() || null,
+                body.ship_to_address_line2?.trim() || null,
+                body.ship_to_city?.trim() || null,
+                body.ship_to_state?.trim() || null,
+                body.ship_to_state_code?.trim() || null,
+                body.ship_to_pincode?.trim() || null,
+                body.ship_to_country?.trim() || null,
+
+                body.additional_charge_label?.trim() || null,
+                additionalChargePaise,
+                body.additional_charge_taxable ? 1 : 0,
+                additionalChargeGstRateBps,
+                additionalChargeCgstPaise,
+                additionalChargeSgstPaise,
+                additionalChargeIgstPaise,
+
+                documentId,
+                companyId,
+            );
+
         const statements = [
             documentInsert,
+            documentEnhancementUpdate,
         ];
 
         for (const calculated of calculatedItems) {

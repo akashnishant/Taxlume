@@ -22,6 +22,15 @@ export type CreateDocumentItemRequest = {
     cess_rate_bps?: number;
 };
 
+export type PaymentTermsCode =
+    | "DUE_ON_RECEIPT"
+    | "NET_7"
+    | "NET_15"
+    | "NET_30"
+    | "NET_45"
+    | "NET_60"
+    | "CUSTOM";
+
 export type CreateDocumentRequest = {
     document_type:
         | "TAX_INVOICE"
@@ -39,6 +48,30 @@ export type CreateDocumentRequest = {
     notes?: string;
     terms_and_conditions?: string;
     reference_number?: string;
+
+    payment_terms_code?: PaymentTermsCode;
+    payment_terms_custom?: string;
+    customer_po_number?: string;
+
+    ship_to_same_as_bill_to?: boolean;
+    ship_to_name?: string;
+    ship_to_contact_person?: string;
+    ship_to_gstin?: string;
+    ship_to_phone?: string;
+    ship_to_email?: string;
+    ship_to_address_line1?: string;
+    ship_to_address_line2?: string;
+    ship_to_city?: string;
+    ship_to_state?: string;
+    ship_to_state_code?: string;
+    ship_to_pincode?: string;
+    ship_to_country?: string;
+
+    additional_charge_label?: string;
+    additional_charge_paise?: number;
+    additional_charge_taxable?: boolean;
+    additional_charge_gst_rate_bps?: number;
+
     items: CreateDocumentItemRequest[];
 };
 
@@ -187,6 +220,40 @@ export type InvoiceDetails = {
 
     supply_type: string | null;
 
+    payment_terms: {
+        code: PaymentTermsCode | null;
+        custom: string | null;
+    };
+
+    customer_po_number: string | null;
+
+    ship_to: {
+        same_as_bill_to: boolean | null;
+        name: string | null;
+        contact_person: string | null;
+        gstin: string | null;
+        phone: string | null;
+        email: string | null;
+        address_line1: string | null;
+        address_line2: string | null;
+        city: string | null;
+        state: string | null;
+        state_code: string | null;
+        pincode: string | null;
+        country: string | null;
+    };
+
+    additional_charge: {
+        label: string | null;
+        amount_paise: number;
+        taxable: boolean;
+        gst_rate_bps: number;
+        cgst_paise: number;
+        sgst_paise: number;
+        igst_paise: number;
+        tax_paise: number;
+    };
+
     totals: {
         subtotal_paise: number;
         discount_paise: number;
@@ -237,6 +304,30 @@ export type UpdateDocumentRequest = {
     notes?: string | null;
     terms_and_conditions?: string | null;
     reference_number?: string | null;
+
+    payment_terms_code?: PaymentTermsCode | null;
+    payment_terms_custom?: string | null;
+    customer_po_number?: string | null;
+
+    ship_to_same_as_bill_to?: boolean | null;
+    ship_to_name?: string | null;
+    ship_to_contact_person?: string | null;
+    ship_to_gstin?: string | null;
+    ship_to_phone?: string | null;
+    ship_to_email?: string | null;
+    ship_to_address_line1?: string | null;
+    ship_to_address_line2?: string | null;
+    ship_to_city?: string | null;
+    ship_to_state?: string | null;
+    ship_to_state_code?: string | null;
+    ship_to_pincode?: string | null;
+    ship_to_country?: string | null;
+
+    additional_charge_label?: string | null;
+    additional_charge_paise?: number;
+    additional_charge_taxable?: boolean;
+    additional_charge_gst_rate_bps?: number;
+
     items?: UpdateDocumentItemRequest[];
 };
 
@@ -255,6 +346,7 @@ export type DocumentStatus =
 
 export type UpdateDocumentStatusResponse = {
     id: string;
+    document_number: string;
     previous_status: string;
     status: string;
     updated_by: string;

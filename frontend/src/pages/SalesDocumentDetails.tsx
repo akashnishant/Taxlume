@@ -53,6 +53,41 @@ function formatMoney(valuePaise: number): string {
   return `₹${(valuePaise / 100).toFixed(2)}`;
 }
 
+function formatPaymentTerms(
+  code: string | null,
+  custom: string | null,
+): string {
+  switch (code) {
+    case "DUE_ON_RECEIPT":
+      return "Due on Receipt";
+    case "NET_7":
+      return "Net 7";
+    case "NET_15":
+      return "Net 15";
+    case "NET_30":
+      return "Net 30";
+    case "NET_45":
+      return "Net 45";
+    case "NET_60":
+      return "Net 60";
+    case "CUSTOM":
+      return custom?.trim() || "Custom";
+    default:
+      return "-";
+  }
+}
+
+function formatRateBps(
+  rateBps: number,
+): string {
+  const percent =
+    rateBps / 100;
+
+  return Number.isInteger(percent)
+    ? percent.toFixed(0)
+    : percent.toFixed(2);
+}
+
 export default function SalesDocumentDetails() {
   const navigate = useNavigate();
   const notify = useNotification();
@@ -191,45 +226,88 @@ export default function SalesDocumentDetails() {
     setActionError("");
 
     try {
-      await updateDocumentStatus(document.id, "ISSUED");
+      const statusResponse =
+        await updateDocumentStatus(
+          document.id,
+          "ISSUED",
+        );
+
+      let issuedDocumentNumber =
+        statusResponse.document_number;
 
       setDocument((currentDocument) =>
         currentDocument
           ? {
               ...currentDocument,
+              document_number:
+                statusResponse.document_number,
               status: "ISSUED",
             }
           : currentDocument,
       );
 
+      /*
+       * Issuance already succeeded at this point.
+       * Refresh best-effort so immutable snapshot data is
+       * immediately used by the Details page.
+       *
+       * A refresh failure must not incorrectly tell the
+       * user that issuance itself failed.
+       */
+      try {
+        const refreshedDocument =
+          await getInvoice(document.id);
+
+        setDocument(
+          refreshedDocument,
+        );
+
+        issuedDocumentNumber =
+          refreshedDocument.document_number;
+      } catch {
+        // Keep the successful status response state.
+      }
+
       setPendingAction(null);
 
       notify({
         type: "success",
-        title: "Document issued successfully",
-        description: `${document.document_number} has been issued and can no longer be edited.`,
+        title:
+          "Document issued successfully",
+        description:
+          `${issuedDocumentNumber} has been issued and can no longer be edited.`,
       });
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        const responseData = error.response?.data as
-          | {
-              message?: string;
-              errors?: string[];
-            }
-          | undefined;
+        const responseData =
+          error.response?.data as
+            | {
+                message?: string;
+                errors?: string[];
+              }
+            | undefined;
 
-        if (responseData?.errors && responseData.errors.length > 0) {
-          setActionError(responseData.errors.join(" "));
+        if (
+          responseData?.errors &&
+          responseData.errors.length > 0
+        ) {
+          setActionError(
+            responseData.errors.join(" "),
+          );
           return;
         }
 
         if (responseData?.message) {
-          setActionError(responseData.message);
+          setActionError(
+            responseData.message,
+          );
           return;
         }
       }
 
-      setActionError("Unable to issue the document. Please try again.");
+      setActionError(
+        "Unable to issue the document. Please try again.",
+      );
     } finally {
       setIsIssuing(false);
     }
@@ -493,6 +571,36 @@ export default function SalesDocumentDetails() {
       }
     : document.party;
 
+  const billToAddress =
+    displayParty?.addresses.find(
+      (address) =>
+        address.is_default === 1,
+    ) ??
+    displayParty?.addresses[0] ??
+    null;
+
+  /*
+   * Legacy invoices have NULL for same_as_bill_to.
+   * Treat NULL as "same" for display only.
+   * No database mutation occurs.
+   */
+  const shipToSameAsBillTo =
+    document.ship_to.same_as_bill_to !== false;
+
+  const paymentTermsLabel =
+    formatPaymentTerms(
+      document.payment_terms.code,
+      document.payment_terms.custom,
+    );
+
+  const balanceDuePaise =
+    Math.max(
+      0,
+      document.totals.total_paise -
+        document.totals.amount_paid_paise,
+    );
+
+
   return (
     <main className="mx-auto max-w-7xl px-6 py-8">
       <button
@@ -633,6 +741,18 @@ export default function SalesDocumentDetails() {
               </p>
             </div>
 
+            {!isPurchaseRoute && (
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                  Due Date
+                </p>
+
+                <p className="mt-1 text-sm font-medium text-slate-900">
+                  {document.due_date ?? "-"}
+                </p>
+              </div>
+            )}
+
             <div>
               <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
                 Place of Supply
@@ -658,16 +778,222 @@ export default function SalesDocumentDetails() {
 
             <div>
               <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
-                Reference
+                Reference Number
               </p>
 
-              <p className="mt-1 text-sm font-medium text-slate-900">
+              <p className="mt-1 break-words text-sm font-medium text-slate-900">
                 {document.reference_number ?? "-"}
               </p>
             </div>
+
+            {!isPurchaseRoute && (
+              <>
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                    Payment Terms
+                  </p>
+
+                  <p className="mt-1 break-words text-sm font-medium text-slate-900">
+                    {paymentTermsLabel}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                    Customer PO Number
+                  </p>
+
+                  <p className="mt-1 break-words text-sm font-medium text-slate-900">
+                    {document.customer_po_number ?? "-"}
+                  </p>
+                </div>
+              </>
+            )}
           </div>
         </section>
 
+        {!isPurchaseRoute ? (
+          <section className="rounded-lg border border-slate-200 bg-white p-6">
+            <h2 className="text-lg font-semibold text-slate-900">
+              Bill To &amp; Ship To
+            </h2>
+
+            <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-2">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-5">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Bill To
+                </h3>
+
+                {displayParty ? (
+                  <div className="mt-4 space-y-1 break-words text-sm leading-6 text-slate-600">
+                    <p className="font-semibold text-slate-900">
+                      {displayParty.display_name ??
+                        displayParty.legal_name ??
+                        "-"}
+                    </p>
+
+                    <p>
+                      GSTIN: {displayParty.gstin ?? "-"}
+                    </p>
+
+                    <p>
+                      Phone: {displayParty.phone ?? "-"}
+                    </p>
+
+                    <p>
+                      Email: {displayParty.email ?? "-"}
+                    </p>
+
+                    <div className="pt-2">
+                      {billToAddress ? (
+                        <>
+                          <p>
+                            {billToAddress.address_line1 || "-"}
+                          </p>
+
+                          {billToAddress.address_line2 && (
+                            <p>{billToAddress.address_line2}</p>
+                          )}
+
+                          <p>
+                            {[
+                              billToAddress.city,
+                              billToAddress.state,
+                              billToAddress.pincode,
+                              billToAddress.country,
+                            ]
+                              .filter(Boolean)
+                              .join(", ") || "-"}
+                          </p>
+                        </>
+                      ) : (
+                        <p>-</p>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="mt-4 text-sm text-slate-500">
+                    No customer attached.
+                  </p>
+                )}
+              </div>
+
+              <div className="rounded-lg border border-slate-200 p-5">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Ship To
+                  </h3>
+
+                  {shipToSameAsBillTo && (
+                    <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+                      Same as Bill To
+                    </span>
+                  )}
+                </div>
+
+                {shipToSameAsBillTo ? (
+                  displayParty ? (
+                    <div className="mt-4 space-y-1 break-words text-sm leading-6 text-slate-600">
+                      <p className="font-semibold text-slate-900">
+                        {displayParty.display_name ??
+                          displayParty.legal_name ??
+                          "-"}
+                      </p>
+
+                      <p>
+                        GSTIN: {displayParty.gstin ?? "-"}
+                      </p>
+
+                      <p>
+                        Phone: {displayParty.phone ?? "-"}
+                      </p>
+
+                      <p>
+                        Email: {displayParty.email ?? "-"}
+                      </p>
+
+                      <div className="pt-2">
+                        {billToAddress ? (
+                          <>
+                            <p>
+                              {billToAddress.address_line1 || "-"}
+                            </p>
+
+                            {billToAddress.address_line2 && (
+                              <p>{billToAddress.address_line2}</p>
+                            )}
+
+                            <p>
+                              {[
+                                billToAddress.city,
+                                billToAddress.state,
+                                billToAddress.pincode,
+                                billToAddress.country,
+                              ]
+                                .filter(Boolean)
+                                .join(", ") || "-"}
+                            </p>
+                          </>
+                        ) : (
+                          <p>-</p>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="mt-4 text-sm text-slate-500">
+                      No customer attached.
+                    </p>
+                  )
+                ) : (
+                  <div className="mt-4 space-y-1 break-words text-sm leading-6 text-slate-600">
+                    <p className="font-semibold text-slate-900">
+                      {document.ship_to.name ?? "-"}
+                    </p>
+
+                    {document.ship_to.contact_person && (
+                      <p>
+                        Contact: {document.ship_to.contact_person}
+                      </p>
+                    )}
+
+                    <p>
+                      GSTIN: {document.ship_to.gstin ?? "-"}
+                    </p>
+
+                    <p>
+                      Phone: {document.ship_to.phone ?? "-"}
+                    </p>
+
+                    <p>
+                      Email: {document.ship_to.email ?? "-"}
+                    </p>
+
+                    <div className="pt-2">
+                      <p>
+                        {document.ship_to.address_line1 ?? "-"}
+                      </p>
+
+                      {document.ship_to.address_line2 && (
+                        <p>{document.ship_to.address_line2}</p>
+                      )}
+
+                      <p>
+                        {[
+                          document.ship_to.city,
+                          document.ship_to.state,
+                          document.ship_to.pincode,
+                          document.ship_to.country,
+                        ]
+                          .filter(Boolean)
+                          .join(", ") || "-"}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
+        ) : (
         <section className="rounded-lg border border-slate-200 bg-white p-6">
           <h2 className="text-lg font-semibold text-slate-900">{partyLabel}</h2>
 
@@ -726,6 +1052,7 @@ export default function SalesDocumentDetails() {
             </p>
           )}
         </section>
+        )}
 
         <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
           <div className="border-b border-slate-200 px-6 py-4">
@@ -819,57 +1146,175 @@ export default function SalesDocumentDetails() {
         </section>
 
         <section className="rounded-lg border border-slate-200 bg-white p-6">
-          <h2 className="text-lg font-semibold text-slate-900">Totals</h2>
+          <h2 className="text-lg font-semibold text-slate-900">
+            Totals
+          </h2>
 
-          <div className="mt-6 ml-auto max-w-sm space-y-3 text-sm">
-            <div className="flex justify-between text-slate-600">
-              <span>Gross Amount</span>
+          <div className="mt-6 ml-auto max-w-md space-y-3 text-sm">
+            <div className="flex justify-between gap-4 text-slate-600">
+              <span>Subtotal</span>
               <span>{formatMoney(document.totals.subtotal_paise)}</span>
             </div>
 
-            <div className="flex justify-between text-slate-600">
+            <div className="flex justify-between gap-4 text-slate-600">
               <span>Discount</span>
               <span>- {formatMoney(document.totals.discount_paise)}</span>
             </div>
 
-            <div className="flex justify-between border-t border-slate-200 pt-3 font-medium text-slate-800">
+            {!isPurchaseRoute &&
+              document.additional_charge.amount_paise > 0 && (
+                <>
+                  <div className="flex justify-between gap-4 text-slate-600">
+                    <span className="break-words">
+                      {document.additional_charge.label ??
+                        "Additional Charge"}
+                      <span className="ml-1 text-xs text-slate-400">
+                        {document.additional_charge.taxable
+                          ? `(${formatRateBps(
+                              document.additional_charge.gst_rate_bps,
+                            )}% GST)`
+                          : "(Non-taxable)"}
+                      </span>
+                    </span>
+
+                    <span className="shrink-0">
+                      {formatMoney(
+                        document.additional_charge.amount_paise,
+                      )}
+                    </span>
+                  </div>
+
+                  {document.additional_charge.taxable && (
+                    <div className="flex justify-between gap-4 text-xs text-slate-500">
+                      <span>
+                        Charge GST included in tax split
+                      </span>
+
+                      <span>
+                        {formatMoney(
+                          document.additional_charge.tax_paise,
+                        )}
+                      </span>
+                    </div>
+                  )}
+                </>
+              )}
+
+            <div className="flex justify-between gap-4 border-t border-slate-200 pt-3 font-medium text-slate-800">
               <span>Taxable Amount</span>
-              <span>{formatMoney(document.totals.taxable_amount_paise)}</span>
+              <span>
+                {formatMoney(
+                  document.totals.taxable_amount_paise,
+                )}
+              </span>
             </div>
 
             {isInterState ? (
-              <div className="flex justify-between text-slate-600">
+              <div className="flex justify-between gap-4 text-slate-600">
                 <span>IGST</span>
-                <span>{formatMoney(document.totals.igst_paise)}</span>
+                <span>
+                  {formatMoney(document.totals.igst_paise)}
+                </span>
               </div>
             ) : (
               <>
-                <div className="flex justify-between text-slate-600">
+                <div className="flex justify-between gap-4 text-slate-600">
                   <span>CGST</span>
-                  <span>{formatMoney(document.totals.cgst_paise)}</span>
+                  <span>
+                    {formatMoney(document.totals.cgst_paise)}
+                  </span>
                 </div>
 
-                <div className="flex justify-between text-slate-600">
+                <div className="flex justify-between gap-4 text-slate-600">
                   <span>SGST</span>
-                  <span>{formatMoney(document.totals.sgst_paise)}</span>
+                  <span>
+                    {formatMoney(document.totals.sgst_paise)}
+                  </span>
                 </div>
               </>
             )}
 
             {document.totals.cess_paise > 0 && (
-              <div className="flex justify-between text-slate-600">
+              <div className="flex justify-between gap-4 text-slate-600">
                 <span>Cess</span>
-                <span>{formatMoney(document.totals.cess_paise)}</span>
+                <span>
+                  {formatMoney(document.totals.cess_paise)}
+                </span>
               </div>
             )}
 
-            <div className="flex justify-between border-t border-slate-200 pt-3 text-base font-semibold text-slate-900">
-              <span>Total</span>
+            {document.totals.round_off_paise !== 0 && (
+              <div className="flex justify-between gap-4 text-slate-600">
+                <span>Round Off</span>
+                <span>
+                  {formatMoney(
+                    document.totals.round_off_paise,
+                  )}
+                </span>
+              </div>
+            )}
 
-              <span>{formatMoney(document.totals.total_paise)}</span>
+            <div className="flex justify-between gap-4 border-t border-slate-200 pt-3 text-base font-semibold text-slate-900">
+              <span>Grand Total</span>
+
+              <span>
+                {formatMoney(document.totals.total_paise)}
+              </span>
             </div>
+
+            {!isPurchaseRoute && (
+              <>
+                <div className="flex justify-between gap-4 text-slate-600">
+                  <span>Amount Paid</span>
+
+                  <span>
+                    {formatMoney(
+                      document.totals.amount_paid_paise,
+                    )}
+                  </span>
+                </div>
+
+                <div className="flex justify-between gap-4 border-t border-slate-200 pt-3 font-semibold text-slate-900">
+                  <span>Balance Due</span>
+
+                  <span>
+                    {formatMoney(balanceDuePaise)}
+                  </span>
+                </div>
+              </>
+            )}
           </div>
         </section>
+
+        {!isPurchaseRoute && (
+          <section className="rounded-lg border border-slate-200 bg-white p-6">
+            <h2 className="text-lg font-semibold text-slate-900">
+              Notes &amp; Terms
+            </h2>
+
+            <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                  Customer Notes
+                </p>
+
+                <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-slate-600">
+                  {document.notes?.trim() || "-"}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                  Terms &amp; Conditions
+                </p>
+
+                <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-slate-600">
+                  {document.terms_and_conditions?.trim() || "-"}
+                </p>
+              </div>
+            </div>
+          </section>
+        )}
 
         {!isPurchaseRoute &&
           document.document_type === "TAX_INVOICE" &&

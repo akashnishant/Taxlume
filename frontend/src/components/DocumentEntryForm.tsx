@@ -23,8 +23,16 @@ import {
 import { formatMoneyPaise } from "../utils/documentDisplay";
 
 import { getDocumentProductRatePaise } from "../utils/documentProductPrice";
+import {
+  calculateDocumentPreview,
+  dueDateForTerms,
+  newSalesEnhancementForm,
+  toSalesEnhancementRequest,
+  validateSalesEnhancements,
+} from "../utils/salesDocumentEnhancements";
 
 import ButtonLoadingContent from "./ButtonLoadingContent";
+import SalesInvoiceFields, { SalesChargeEditor } from "./SalesInvoiceFields";
 import { useNotification } from "../hooks/useNotifications";
 
 type DocumentEntryFormProps = {
@@ -43,6 +51,14 @@ export default function DocumentEntryForm({ config }: DocumentEntryFormProps) {
   const [companyLoadError, setCompanyLoadError] = useState("");
 
   const [documentDate, setDocumentDate] = useState(getTodayDate);
+
+  const [salesEnhancements, setSalesEnhancements] = useState(() =>
+    newSalesEnhancementForm(getTodayDate()),
+  );
+
+  const [notes, setNotes] = useState("");
+
+  const [termsAndConditions, setTermsAndConditions] = useState("");
 
   const [partyId, setPartyId] = useState("");
 
@@ -112,6 +128,33 @@ export default function DocumentEntryForm({ config }: DocumentEntryFormProps) {
     company,
     selectedParty,
   );
+
+  function handleDocumentDateChange(nextDocumentDate: string) {
+    if (config.mode === "SALES") {
+      setSalesEnhancements((current) => {
+        const previousAutomaticDueDate = dueDateForTerms(
+          documentDate,
+          current.paymentTermsCode,
+        );
+
+        const shouldMoveDueDate =
+          current.paymentTermsCode !== "CUSTOM" &&
+          current.dueDate === previousAutomaticDueDate;
+
+        return {
+          ...current,
+          dueDate: shouldMoveDueDate
+            ? dueDateForTerms(
+                nextDocumentDate,
+                current.paymentTermsCode,
+              )
+            : current.dueDate,
+        };
+      });
+    }
+
+    setDocumentDate(nextDocumentDate);
+  }
 
   function handleAddItem() {
     setItems((currentItems) => [
@@ -236,6 +279,19 @@ export default function DocumentEntryForm({ config }: DocumentEntryFormProps) {
       return;
     }
 
+    if (config.mode === "SALES") {
+      const enhancementError =
+        validateSalesEnhancements(
+          salesEnhancements,
+          documentDate,
+        );
+
+      if (enhancementError) {
+        setSaveError(enhancementError);
+        return;
+      }
+    }
+
     if (items.length === 0) {
       setSaveError("Please add at least one product or service.");
       return;
@@ -302,6 +358,26 @@ export default function DocumentEntryForm({ config }: DocumentEntryFormProps) {
         place_of_supply_state: placeOfSupply?.name,
         place_of_supply_state_code: placeOfSupplyStateCode,
         currency_code: "INR",
+        ...(config.mode === "SALES"
+          ? {
+              due_date:
+                salesEnhancements.dueDate ||
+                undefined,
+
+              reference_number:
+                salesEnhancements.referenceNumber.trim() ||
+                undefined,
+
+              notes: notes.trim() || undefined,
+
+              terms_and_conditions:
+                termsAndConditions.trim() || undefined,
+
+              ...toSalesEnhancementRequest(
+                salesEnhancements,
+              ),
+            }
+          : {}),
         items: documentItems,
       });
 
@@ -369,15 +445,60 @@ export default function DocumentEntryForm({ config }: DocumentEntryFormProps) {
   const isInterState =
     hasTaxLocation && supplierStateCode !== placeOfSupplyStateCode;
 
+  const isIntraState = hasTaxLocation && !isInterState;
+
   const totalCgstPaise =
-    hasTaxLocation && !isInterState ? Math.floor(totalGstPaise / 2) : 0;
+    isIntraState ? Math.floor(totalGstPaise / 2) : 0;
 
   const totalSgstPaise =
-    hasTaxLocation && !isInterState ? totalGstPaise - totalCgstPaise : 0;
+    isIntraState ? totalGstPaise - totalCgstPaise : 0;
 
   const totalIgstPaise = hasTaxLocation && isInterState ? totalGstPaise : 0;
 
   const grandTotalPaise = subtotalPaise + totalGstPaise;
+
+  const salesPreview =
+    config.mode === "SALES"
+      ? calculateDocumentPreview(
+          items.map((item) => ({
+            quantity: item.quantity,
+            ratePaise: item.ratePaise,
+            discountPaise: item.discountPaise,
+            gstRateBps: item.gstRateBps,
+            cessRateBps:
+              products.find((product) => product.id === item.productId)
+                ?.cess_rate_bps ?? 0,
+          })),
+          isIntraState,
+          salesEnhancements,
+        )
+      : null;
+
+  const displayedGrossPaise = salesPreview?.grossPaise ?? grossAmountPaise;
+
+  const displayedDiscountPaise =
+    salesPreview?.discountPaise ?? totalDiscountPaise;
+
+  const displayedTaxablePaise =
+    salesPreview?.taxablePaise ?? subtotalPaise;
+
+  const displayedGstPaise =
+    salesPreview?.gstPaise ?? totalGstPaise;
+
+  const displayedCgstPaise =
+    salesPreview?.cgstPaise ?? totalCgstPaise;
+
+  const displayedSgstPaise =
+    salesPreview?.sgstPaise ?? totalSgstPaise;
+
+  const displayedIgstPaise =
+    salesPreview?.igstPaise ?? totalIgstPaise;
+
+  const displayedCessPaise =
+    salesPreview?.cessPaise ?? 0;
+
+  const displayedTotalPaise =
+    salesPreview?.totalPaise ?? grandTotalPaise;
 
   const activeProducts = products.filter((product) => product.is_active);
 
@@ -426,7 +547,11 @@ export default function DocumentEntryForm({ config }: DocumentEntryFormProps) {
               <input
                 type="date"
                 value={documentDate}
-                onChange={(event) => setDocumentDate(event.target.value)}
+                onChange={(event) =>
+                  handleDocumentDateChange(
+                    event.target.value,
+                  )
+                }
                 className="w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500"
               />
             </div>
@@ -498,6 +623,15 @@ export default function DocumentEntryForm({ config }: DocumentEntryFormProps) {
             </div>
           </div>
         </section>
+
+        {config.mode === "SALES" && (
+          <SalesInvoiceFields
+            value={salesEnhancements}
+            onChange={setSalesEnhancements}
+            documentDate={documentDate}
+            billTo={selectedParty}
+          />
+        )}
 
         <section className="rounded-lg border border-slate-200 bg-white p-6">
           <div className="flex items-center justify-between">
@@ -698,52 +832,128 @@ export default function DocumentEntryForm({ config }: DocumentEntryFormProps) {
           )}
         </section>
 
+        {config.mode === "SALES" && (
+          <section className="rounded-lg border border-slate-200 bg-white p-6">
+            <h2 className="text-lg font-semibold text-slate-900">
+              Charges, Notes &amp; Terms
+            </h2>
+
+            <div className="mt-6">
+              <SalesChargeEditor
+                value={salesEnhancements}
+                onChange={setSalesEnhancements}
+              />
+            </div>
+
+            <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-2">
+              <label>
+                <span className="mb-2 block text-sm font-medium text-slate-700">
+                  Customer Notes
+                </span>
+
+                <textarea
+                  rows={4}
+                  maxLength={2000}
+                  value={notes}
+                  onChange={(event) =>
+                    setNotes(event.target.value)
+                  }
+                  placeholder="Add any notes that should appear on the invoice."
+                  className="w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500"
+                />
+              </label>
+
+              <label>
+                <span className="mb-2 block text-sm font-medium text-slate-700">
+                  Terms &amp; Conditions
+                </span>
+
+                <textarea
+                  rows={4}
+                  maxLength={4000}
+                  value={termsAndConditions}
+                  onChange={(event) =>
+                    setTermsAndConditions(
+                      event.target.value,
+                    )
+                  }
+                  placeholder="Add invoice terms and conditions."
+                  className="w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500"
+                />
+              </label>
+            </div>
+          </section>
+        )}
+
         <section className="rounded-lg border border-slate-200 bg-white p-6">
           <h2 className="text-lg font-semibold text-slate-900">Totals</h2>
 
           <div className="mt-6 ml-auto max-w-sm space-y-3 text-sm">
             <div className="flex justify-between text-slate-600">
               <span>Gross Amount</span>
-              <span>{formatMoneyPaise(grossAmountPaise)}</span>
+              <span>{formatMoneyPaise(displayedGrossPaise)}</span>
             </div>
 
             <div className="flex justify-between text-slate-600">
               <span>Discount</span>
-              <span>- {formatMoneyPaise(totalDiscountPaise)}</span>
+              <span>- {formatMoneyPaise(displayedDiscountPaise)}</span>
             </div>
+
+            {config.mode === "SALES" &&
+              salesEnhancements.additionalChargePaise > 0 && (
+                <div className="flex justify-between text-slate-600">
+                  <span>
+                    {salesEnhancements.additionalChargeLabel.trim() ||
+                      "Additional Charge"}
+                  </span>
+
+                  <span>
+                    {formatMoneyPaise(
+                      salesEnhancements.additionalChargePaise,
+                    )}
+                  </span>
+                </div>
+              )}
 
             <div className="flex justify-between border-t border-slate-200 pt-3 font-medium text-slate-800">
               <span>Taxable Amount</span>
-              <span>{formatMoneyPaise(subtotalPaise)}</span>
+              <span>{formatMoneyPaise(displayedTaxablePaise)}</span>
             </div>
 
             {!hasTaxLocation ? (
               <div className="flex justify-between text-slate-600">
                 <span>Total GST</span>
-                <span>{formatMoneyPaise(totalGstPaise)}</span>
+                <span>{formatMoneyPaise(displayedGstPaise)}</span>
               </div>
             ) : isInterState ? (
               <div className="flex justify-between text-slate-600">
                 <span>IGST</span>
-                <span>{formatMoneyPaise(totalIgstPaise)}</span>
+                <span>{formatMoneyPaise(displayedIgstPaise)}</span>
               </div>
             ) : (
               <>
                 <div className="flex justify-between text-slate-600">
                   <span>CGST</span>
-                  <span>{formatMoneyPaise(totalCgstPaise)}</span>
+                  <span>{formatMoneyPaise(displayedCgstPaise)}</span>
                 </div>
 
                 <div className="flex justify-between text-slate-600">
                   <span>SGST</span>
-                  <span>{formatMoneyPaise(totalSgstPaise)}</span>
+                  <span>{formatMoneyPaise(displayedSgstPaise)}</span>
                 </div>
               </>
             )}
 
+            {displayedCessPaise > 0 && (
+              <div className="flex justify-between text-slate-600">
+                <span>Cess</span>
+                <span>{formatMoneyPaise(displayedCessPaise)}</span>
+              </div>
+            )}
+
             <div className="flex justify-between border-t border-slate-200 pt-3 text-base font-semibold text-slate-900">
               <span>Total</span>
-              <span>{formatMoneyPaise(grandTotalPaise)}</span>
+              <span>{formatMoneyPaise(displayedTotalPaise)}</span>
             </div>
           </div>
         </section>

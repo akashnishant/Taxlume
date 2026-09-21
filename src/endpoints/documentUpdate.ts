@@ -33,6 +33,16 @@ const DocumentItemUpdateRequest = z
         }
     });
 
+const PaymentTermsCode = z.enum([
+    "DUE_ON_RECEIPT",
+    "NET_7",
+    "NET_15",
+    "NET_30",
+    "NET_45",
+    "NET_60",
+    "CUSTOM",
+]);
+
 const DocumentUpdateRequest = z.object({
     document_date: z.string().date().optional(),
     due_date: z.string().date().nullable().optional(),
@@ -44,6 +54,35 @@ const DocumentUpdateRequest = z.object({
     notes: z.string().max(10000).nullable().optional(),
     terms_and_conditions: z.string().max(10000).nullable().optional(),
     reference_number: z.string().max(100).nullable().optional(),
+
+    payment_terms_code: PaymentTermsCode.nullable().optional(),
+    payment_terms_custom: z.string().trim().max(500).nullable().optional(),
+    customer_po_number: z.string().trim().max(100).nullable().optional(),
+
+    ship_to_same_as_bill_to: z.boolean().nullable().optional(),
+    ship_to_name: z.string().trim().max(200).nullable().optional(),
+    ship_to_contact_person: z.string().trim().max(200).nullable().optional(),
+    ship_to_gstin: z.string().trim().max(20).nullable().optional(),
+    ship_to_phone: z.string().trim().max(50).nullable().optional(),
+    ship_to_email: z.string().trim().max(320).nullable().optional(),
+    ship_to_address_line1: z.string().trim().max(500).nullable().optional(),
+    ship_to_address_line2: z.string().trim().max(500).nullable().optional(),
+    ship_to_city: z.string().trim().max(100).nullable().optional(),
+    ship_to_state: z.string().trim().max(100).nullable().optional(),
+    ship_to_state_code: z.string().trim().max(10).nullable().optional(),
+    ship_to_pincode: z.string().trim().max(20).nullable().optional(),
+    ship_to_country: z.string().trim().max(100).nullable().optional(),
+
+    additional_charge_label: z.string().trim().max(100).nullable().optional(),
+    additional_charge_paise: z.number().int().nonnegative().optional(),
+    additional_charge_taxable: z.boolean().optional(),
+    additional_charge_gst_rate_bps: z
+        .number()
+        .int()
+        .min(0)
+        .max(10000)
+        .optional(),
+
     items: z.array(DocumentItemUpdateRequest).min(1).max(500).optional(),
 });
 
@@ -117,6 +156,33 @@ export class DocumentUpdate extends OpenAPIRoute {
                     place_of_supply_state,
                     place_of_supply_state_code,
                     supply_type,
+
+                    payment_terms_code,
+                    payment_terms_custom,
+                    customer_po_number,
+
+                    ship_to_same_as_bill_to,
+                    ship_to_name,
+                    ship_to_contact_person,
+                    ship_to_gstin,
+                    ship_to_phone,
+                    ship_to_email,
+                    ship_to_address_line1,
+                    ship_to_address_line2,
+                    ship_to_city,
+                    ship_to_state,
+                    ship_to_state_code,
+                    ship_to_pincode,
+                    ship_to_country,
+
+                    additional_charge_label,
+                    additional_charge_paise,
+                    additional_charge_taxable,
+                    additional_charge_gst_rate_bps,
+                    additional_charge_cgst_paise,
+                    additional_charge_sgst_paise,
+                    additional_charge_igst_paise,
+
                     notes,
                     terms_and_conditions,
                     reference_number,
@@ -147,6 +213,33 @@ export class DocumentUpdate extends OpenAPIRoute {
                 place_of_supply_state: string | null;
                 place_of_supply_state_code: string | null;
                 supply_type: string | null;
+
+                payment_terms_code: string | null;
+                payment_terms_custom: string | null;
+                customer_po_number: string | null;
+
+                ship_to_same_as_bill_to: number | null;
+                ship_to_name: string | null;
+                ship_to_contact_person: string | null;
+                ship_to_gstin: string | null;
+                ship_to_phone: string | null;
+                ship_to_email: string | null;
+                ship_to_address_line1: string | null;
+                ship_to_address_line2: string | null;
+                ship_to_city: string | null;
+                ship_to_state: string | null;
+                ship_to_state_code: string | null;
+                ship_to_pincode: string | null;
+                ship_to_country: string | null;
+
+                additional_charge_label: string | null;
+                additional_charge_paise: number;
+                additional_charge_taxable: number;
+                additional_charge_gst_rate_bps: number;
+                additional_charge_cgst_paise: number;
+                additional_charge_sgst_paise: number;
+                additional_charge_igst_paise: number;
+
                 notes: string | null;
                 terms_and_conditions: string | null;
                 reference_number: string | null;
@@ -191,20 +284,26 @@ export class DocumentUpdate extends OpenAPIRoute {
             body.party_id !== undefined &&
             body.party_id !== document.party_id;
 
+        const additionalChargeChanged =
+            body.additional_charge_paise !== undefined ||
+            body.additional_charge_taxable !== undefined ||
+            body.additional_charge_gst_rate_bps !== undefined;
+
         if (
             (
                 placeOfSupplyChanged ||
                 (
                     document.document_type === "PURCHASE_ORDER" &&
                     partyChanged
-                )
+                ) ||
+                additionalChargeChanged
             ) &&
             !body.items
         ) {
             return c.json({
                 success: false,
                 message:
-                    "Items must be provided when the place of supply or purchase-order vendor changes so that GST can be recalculated.",
+                    "Items must be provided when tax-affecting document fields change so that GST and totals can be recalculated.",
             }, 400);
         }
 
@@ -510,6 +609,20 @@ export class DocumentUpdate extends OpenAPIRoute {
             calculation = calculateDocument(
                 calculationInput,
                 isIntraState,
+                {
+                    amount_paise:
+                        body.additional_charge_paise !== undefined
+                            ? body.additional_charge_paise
+                            : document.additional_charge_paise,
+                    taxable:
+                        body.additional_charge_taxable !== undefined
+                            ? body.additional_charge_taxable
+                            : document.additional_charge_taxable === 1,
+                    gst_rate_bps:
+                        body.additional_charge_gst_rate_bps !== undefined
+                            ? body.additional_charge_gst_rate_bps
+                            : document.additional_charge_gst_rate_bps,
+                },
             );
         }
 
@@ -599,6 +712,174 @@ export class DocumentUpdate extends OpenAPIRoute {
                 ? body.reference_number
                 : document.reference_number;
 
+        const updatedPaymentTermsCode =
+            body.payment_terms_code !== undefined
+                ? body.payment_terms_code
+                : document.payment_terms_code;
+
+        const updatedPaymentTermsCustom =
+            body.payment_terms_custom !== undefined
+                ? body.payment_terms_custom
+                : document.payment_terms_custom;
+
+        const updatedCustomerPoNumber =
+            body.customer_po_number !== undefined
+                ? body.customer_po_number
+                : document.customer_po_number;
+
+        const updatedShipToSameAsBillTo =
+            body.ship_to_same_as_bill_to !== undefined
+                ? body.ship_to_same_as_bill_to === null
+                    ? null
+                    : body.ship_to_same_as_bill_to
+                        ? 1
+                        : 0
+                : document.ship_to_same_as_bill_to;
+
+        const updatedShipToName =
+            body.ship_to_name !== undefined
+                ? body.ship_to_name
+                : document.ship_to_name;
+
+        const updatedShipToContactPerson =
+            body.ship_to_contact_person !== undefined
+                ? body.ship_to_contact_person
+                : document.ship_to_contact_person;
+
+        const updatedShipToGstin =
+            body.ship_to_gstin !== undefined
+                ? body.ship_to_gstin
+                : document.ship_to_gstin;
+
+        const updatedShipToPhone =
+            body.ship_to_phone !== undefined
+                ? body.ship_to_phone
+                : document.ship_to_phone;
+
+        const updatedShipToEmail =
+            body.ship_to_email !== undefined
+                ? body.ship_to_email
+                : document.ship_to_email;
+
+        const updatedShipToAddressLine1 =
+            body.ship_to_address_line1 !== undefined
+                ? body.ship_to_address_line1
+                : document.ship_to_address_line1;
+
+        const updatedShipToAddressLine2 =
+            body.ship_to_address_line2 !== undefined
+                ? body.ship_to_address_line2
+                : document.ship_to_address_line2;
+
+        const updatedShipToCity =
+            body.ship_to_city !== undefined
+                ? body.ship_to_city
+                : document.ship_to_city;
+
+        const updatedShipToState =
+            body.ship_to_state !== undefined
+                ? body.ship_to_state
+                : document.ship_to_state;
+
+        const updatedShipToStateCode =
+            body.ship_to_state_code !== undefined
+                ? body.ship_to_state_code
+                : document.ship_to_state_code;
+
+        const updatedShipToPincode =
+            body.ship_to_pincode !== undefined
+                ? body.ship_to_pincode
+                : document.ship_to_pincode;
+
+        const updatedShipToCountry =
+            body.ship_to_country !== undefined
+                ? body.ship_to_country
+                : document.ship_to_country;
+
+        const updatedAdditionalChargeLabel =
+            body.additional_charge_label !== undefined
+                ? body.additional_charge_label
+                : document.additional_charge_label;
+
+        const updatedAdditionalChargePaise =
+            calculation?.additionalChargePaise ??
+            document.additional_charge_paise;
+
+        const updatedAdditionalChargeTaxable =
+            body.additional_charge_taxable !== undefined
+                ? body.additional_charge_taxable
+                : document.additional_charge_taxable === 1;
+
+        const updatedAdditionalChargeGstRateBps =
+            calculation?.additionalChargeGstRateBps ??
+            document.additional_charge_gst_rate_bps;
+
+        if (
+            updatedDueDate &&
+            updatedDueDate < updatedDocumentDate
+        ) {
+            return c.json(
+                {
+                    success: false,
+                    message:
+                        "Due date cannot be before the document date.",
+                },
+                400,
+            );
+        }
+
+        if (
+            updatedPaymentTermsCode === "CUSTOM" &&
+            !updatedPaymentTermsCustom?.trim()
+        ) {
+            return c.json(
+                {
+                    success: false,
+                    message:
+                        "Custom payment terms are required when Payment Terms is Custom.",
+                },
+                400,
+            );
+        }
+
+        if (updatedShipToSameAsBillTo === 0) {
+            if (!updatedShipToName?.trim()) {
+                return c.json(
+                    {
+                        success: false,
+                        message:
+                            "Ship To name is required when Ship To is different from Bill To.",
+                    },
+                    400,
+                );
+            }
+
+            if (!updatedShipToAddressLine1?.trim()) {
+                return c.json(
+                    {
+                        success: false,
+                        message:
+                            "Ship To address is required when Ship To is different from Bill To.",
+                    },
+                    400,
+                );
+            }
+        }
+
+        if (
+            !updatedAdditionalChargeTaxable &&
+            updatedAdditionalChargeGstRateBps > 0
+        ) {
+            return c.json(
+                {
+                    success: false,
+                    message:
+                        "Additional Charge GST rate must be 0 when the charge is non-taxable.",
+                },
+                400,
+            );
+        }
+
         const documentUpdateStatement =
             c.env.DB
                 .prepare(`
@@ -650,6 +931,76 @@ export class DocumentUpdate extends OpenAPIRoute {
                 document.id,
                 companyId,
             );
+
+        const documentEnhancementUpdateStatement =
+            c.env.DB
+                .prepare(`
+                    UPDATE documents
+                    SET
+                        payment_terms_code = ?,
+                        payment_terms_custom = ?,
+                        customer_po_number = ?,
+
+                        ship_to_same_as_bill_to = ?,
+                        ship_to_name = ?,
+                        ship_to_contact_person = ?,
+                        ship_to_gstin = ?,
+                        ship_to_phone = ?,
+                        ship_to_email = ?,
+                        ship_to_address_line1 = ?,
+                        ship_to_address_line2 = ?,
+                        ship_to_city = ?,
+                        ship_to_state = ?,
+                        ship_to_state_code = ?,
+                        ship_to_pincode = ?,
+                        ship_to_country = ?,
+
+                        additional_charge_label = ?,
+                        additional_charge_paise = ?,
+                        additional_charge_taxable = ?,
+                        additional_charge_gst_rate_bps = ?,
+                        additional_charge_cgst_paise = ?,
+                        additional_charge_sgst_paise = ?,
+                        additional_charge_igst_paise = ?
+                    WHERE id = ?
+                        AND company_id = ?
+                        AND status = 'DRAFT'
+                `)
+                .bind(
+                    updatedPaymentTermsCode,
+                    updatedPaymentTermsCode === "CUSTOM"
+                        ? updatedPaymentTermsCustom?.trim() || null
+                        : null,
+                    updatedCustomerPoNumber?.trim() || null,
+
+                    updatedShipToSameAsBillTo,
+                    updatedShipToName?.trim() || null,
+                    updatedShipToContactPerson?.trim() || null,
+                    updatedShipToGstin?.trim() || null,
+                    updatedShipToPhone?.trim() || null,
+                    updatedShipToEmail?.trim() || null,
+                    updatedShipToAddressLine1?.trim() || null,
+                    updatedShipToAddressLine2?.trim() || null,
+                    updatedShipToCity?.trim() || null,
+                    updatedShipToState?.trim() || null,
+                    updatedShipToStateCode?.trim() || null,
+                    updatedShipToPincode?.trim() || null,
+                    updatedShipToCountry?.trim() || null,
+
+                    updatedAdditionalChargeLabel?.trim() || null,
+                    updatedAdditionalChargePaise,
+                    updatedAdditionalChargeTaxable ? 1 : 0,
+                    updatedAdditionalChargeGstRateBps,
+                    calculation?.additionalChargeCgstPaise ??
+                        document.additional_charge_cgst_paise,
+                    calculation?.additionalChargeSgstPaise ??
+                        document.additional_charge_sgst_paise,
+                    calculation?.additionalChargeIgstPaise ??
+                        document.additional_charge_igst_paise,
+
+                    document.id,
+                    companyId,
+                );
 
         const itemStatements: D1PreparedStatement[] = [];
 
@@ -775,6 +1126,7 @@ export class DocumentUpdate extends OpenAPIRoute {
 
         await c.env.DB.batch([
             documentUpdateStatement,
+            documentEnhancementUpdateStatement,
             ...itemStatements,
             auditStatement,
         ]);

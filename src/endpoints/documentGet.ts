@@ -30,6 +30,33 @@ type DocumentRow = {
     place_of_supply_state: string | null;
     place_of_supply_state_code: string | null;
     supply_type: string | null;
+
+    payment_terms_code: string | null;
+    payment_terms_custom: string | null;
+    customer_po_number: string | null;
+
+    ship_to_same_as_bill_to: number | null;
+    ship_to_name: string | null;
+    ship_to_contact_person: string | null;
+    ship_to_gstin: string | null;
+    ship_to_phone: string | null;
+    ship_to_email: string | null;
+    ship_to_address_line1: string | null;
+    ship_to_address_line2: string | null;
+    ship_to_city: string | null;
+    ship_to_state: string | null;
+    ship_to_state_code: string | null;
+    ship_to_pincode: string | null;
+    ship_to_country: string | null;
+
+    additional_charge_label: string | null;
+    additional_charge_paise: number;
+    additional_charge_taxable: number;
+    additional_charge_gst_rate_bps: number;
+    additional_charge_cgst_paise: number;
+    additional_charge_sgst_paise: number;
+    additional_charge_igst_paise: number;
+
     subtotal_paise: number;
     discount_paise: number;
     taxable_amount_paise: number;
@@ -161,6 +188,32 @@ export class DocumentGet extends OpenAPIRoute {
 						d.place_of_supply_state,
 						d.place_of_supply_state_code,
 						d.supply_type,
+                                                d.payment_terms_code,
+                                                d.payment_terms_custom,
+                                                d.customer_po_number,
+
+                                                d.ship_to_same_as_bill_to,
+                                                d.ship_to_name,
+                                                d.ship_to_contact_person,
+                                                d.ship_to_gstin,
+                                                d.ship_to_phone,
+                                                d.ship_to_email,
+                                                d.ship_to_address_line1,
+                                                d.ship_to_address_line2,
+                                                d.ship_to_city,
+                                                d.ship_to_state,
+                                                d.ship_to_state_code,
+                                                d.ship_to_pincode,
+                                                d.ship_to_country,
+
+                                                d.additional_charge_label,
+                                                d.additional_charge_paise,
+                                                d.additional_charge_taxable,
+                                                d.additional_charge_gst_rate_bps,
+                                                d.additional_charge_cgst_paise,
+                                                d.additional_charge_sgst_paise,
+                                                d.additional_charge_igst_paise,
+
 						d.subtotal_paise,
 						d.discount_paise,
 						d.taxable_amount_paise,
@@ -384,6 +437,68 @@ export class DocumentGet extends OpenAPIRoute {
 
                 supply_type:
                     document.supply_type,
+
+                payment_terms: {
+                    code:
+                        document.payment_terms_code,
+                    custom:
+                        document.payment_terms_custom,
+                },
+
+                customer_po_number:
+                    document.customer_po_number,
+
+                ship_to: {
+                    same_as_bill_to:
+                        document.ship_to_same_as_bill_to === null
+                            ? null
+                            : document.ship_to_same_as_bill_to === 1,
+                    name:
+                        document.ship_to_name,
+                    contact_person:
+                        document.ship_to_contact_person,
+                    gstin:
+                        document.ship_to_gstin,
+                    phone:
+                        document.ship_to_phone,
+                    email:
+                        document.ship_to_email,
+                    address_line1:
+                        document.ship_to_address_line1,
+                    address_line2:
+                        document.ship_to_address_line2,
+                    city:
+                        document.ship_to_city,
+                    state:
+                        document.ship_to_state,
+                    state_code:
+                        document.ship_to_state_code,
+                    pincode:
+                        document.ship_to_pincode,
+                    country:
+                        document.ship_to_country,
+                },
+
+                additional_charge: {
+                    label:
+                        document.additional_charge_label,
+                    amount_paise:
+                        document.additional_charge_paise,
+                    taxable:
+                        document.additional_charge_taxable === 1,
+                    gst_rate_bps:
+                        document.additional_charge_gst_rate_bps,
+                    cgst_paise:
+                        document.additional_charge_cgst_paise,
+                    sgst_paise:
+                        document.additional_charge_sgst_paise,
+                    igst_paise:
+                        document.additional_charge_igst_paise,
+                    tax_paise:
+                        document.additional_charge_cgst_paise +
+                        document.additional_charge_sgst_paise +
+                        document.additional_charge_igst_paise,
+                },
 
                 totals: {
                     subtotal_paise:

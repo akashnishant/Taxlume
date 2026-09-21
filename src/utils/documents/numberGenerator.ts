@@ -3,7 +3,7 @@ type DocumentNumberResult = {
     financialYear: string;
 };
 
-function getFinancialYear(date: Date): string {
+export function getFinancialYear(date: Date): string {
     const year = date.getUTCFullYear();
     const month = date.getUTCMonth() + 1;
 
@@ -14,7 +14,7 @@ function getFinancialYear(date: Date): string {
     return `${year - 1}-${String(year).slice(-2)}`;
 }
 
-function getDefaultPrefix(documentType: string): string {
+export function getDefaultPrefix(documentType: string): string {
     switch (documentType) {
         case "TAX_INVOICE":
             return "INV";
