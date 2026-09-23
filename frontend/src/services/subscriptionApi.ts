@@ -98,6 +98,14 @@ export type SubscriptionReconcileResponse = {
   };
 };
 
+// The live plan can still have its legacy display name while the branded
+// frontend is being reviewed. Preserve custom names and all stable IDs.
+function displayPlanName(name: string): string {
+  return name === "Taxlume Standard"
+    ? "Techabanca Billing Standard"
+    : name;
+}
+
 export async function getSubscriptionPlans(): Promise<
   SubscriptionPlan[]
 > {
@@ -106,7 +114,10 @@ export async function getSubscriptionPlans(): Promise<
       "/api/subscription-plans",
     );
 
-  return response.data.plans;
+  return response.data.plans.map((plan) => ({
+    ...plan,
+    name: displayPlanName(plan.name),
+  }));
 }
 
 export async function getCurrentSubscription(): Promise<
@@ -131,7 +142,13 @@ export async function createSubscriptionCheckout(
       },
     );
 
-  return response.data;
+  return {
+    ...response.data,
+    checkout: {
+      ...response.data.checkout,
+      plan_name: displayPlanName(response.data.checkout.plan_name),
+    },
+  };
 }
 
 export async function reconcileSubscription(): Promise<

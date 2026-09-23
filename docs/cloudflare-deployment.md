@@ -1,5 +1,7 @@
 # Cloudflare rollout: Techabanca Billing
 
+For the domain-free Pages review while `taxlume.pages.dev` remains the production frontend, use [preview-rollout.md](preview-rollout.md). The steps below apply to the later production/custom-domain cutover.
+
 ## Existing resources
 
 | Role | Resource | Action |
