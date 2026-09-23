@@ -42,7 +42,7 @@ function WelcomeRoute() {
 
   return (
     <Suspense
-      fallback={<LoadingState message="Loading Taxlume..." variant="screen" />}
+      fallback={<LoadingState message="Loading Techabanca Billing..." variant="screen" />}
     >
       <Landing />
     </Suspense>

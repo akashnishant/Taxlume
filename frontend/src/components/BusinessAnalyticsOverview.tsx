@@ -425,7 +425,7 @@ export default function BusinessAnalyticsOverview({
                   >
                     <defs>
                       <linearGradient
-                        id="taxlumeSalesGradient"
+                        id="billingSalesGradient"
                         x1="0"
                         y1="0"
                         x2="0"
@@ -493,7 +493,7 @@ export default function BusinessAnalyticsOverview({
                       name="Sales excluding tax"
                       stroke="#4f46e5"
                       strokeWidth={2.5}
-                      fill="url(#taxlumeSalesGradient)"
+                      fill="url(#billingSalesGradient)"
                       dot={false}
                       activeDot={{ r: 5 }}
                     />
@@ -525,8 +525,8 @@ export default function BusinessAnalyticsOverview({
             )}
 
             <p className="mt-10 text-xs leading-5 text-slate-500">
-              Historical collections may exclude payments entered before Taxlume
-              introduced receipt tracking. Outstanding and overdue figures are
+              Historical collections may exclude payments entered before
+              receipt tracking was introduced. Outstanding and overdue figures are
               current balances, not balances from the selected reporting period.
             </p>
           </section>

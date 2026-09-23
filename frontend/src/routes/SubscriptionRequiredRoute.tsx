@@ -55,7 +55,7 @@ export default function SubscriptionRequiredRoute() {
           </h1>
 
           <p className="mt-2 text-sm text-slate-500">
-            Taxlume could not verify your subscription status. Please try again.
+            Techabanca Billing could not verify your subscription status. Please try again.
           </p>
 
           <button

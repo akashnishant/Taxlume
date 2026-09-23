@@ -205,7 +205,7 @@ export default function CollectionsByMethodChart({
           </div>
 
           <p className="mt-4 text-xs leading-5 text-slate-500">
-            The method totals represent recorded receipts in Taxlume, not
+            The method totals represent recorded receipts in Techabanca Billing, not
             bank-verified transactions. Reversed receipts are excluded.
           </p>
         </>

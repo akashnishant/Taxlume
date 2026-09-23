@@ -1,4 +1,4 @@
-name: Deploy Taxlume Worker
+name: Deploy Techabanca Billing Worker
 
 on:
   push:

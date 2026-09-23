@@ -7,6 +7,7 @@ import { setAuthToken } from "../services/authStorage";
 import { setSession } from "../services/sessionStorage";
 import ButtonLoadingContent from "../components/ButtonLoadingContent";
 import { startSessionTiming } from "../services/sessionTiming";
+import BrandMark from "../components/BrandMark";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -73,17 +74,15 @@ export default function Login() {
         <div className="text-center mb-8">
           <Link
             to="/welcome"
-            aria-label="Go to Taxlume landing page"
-            className="inline-flex flex-col items-center rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-indigo-600"
+            aria-label="Go to Techabanca Billing landing page"
+            className="inline-flex flex-col items-center rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-800"
           >
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-slate-900 text-white text-2xl font-bold shadow-lg">
-              T
-            </div>
+            <BrandMark className="h-14 w-14 drop-shadow-lg" />
 
-            <h1 className="mt-4 text-3xl font-bold text-slate-900">Taxlume</h1>
+            <h1 className="mt-4 text-3xl font-bold text-slate-900">Techabanca Billing</h1>
 
             <p className="mt-2 text-sm font-medium text-slate-600">
-              Smart Billing for Growing Businesses
+              Smart billing for growing businesses
             </p>
           </Link>
         </div>
@@ -192,7 +191,7 @@ export default function Login() {
             </button>
           </form>
           <p className="mt-6 text-center text-sm text-slate-500">
-            New to Taxlume?{" "}
+            New to Techabanca Billing?{" "}
             <Link
               to="/register"
               className="font-semibold text-slate-900 hover:underline"
@@ -203,7 +202,7 @@ export default function Login() {
         </div>
 
         <p className="mt-6 text-center text-xs text-slate-400">
-          © {new Date().getFullYear()} Taxlume
+          © {new Date().getFullYear()} Techabanca Billing
         </p>
       </div>
     </div>

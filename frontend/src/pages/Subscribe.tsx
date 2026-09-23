@@ -12,6 +12,7 @@ import {
 import { endSession } from "../services/endSession";
 import { loadRazorpayCheckout } from "../payments/loadRazorpayCheckout";
 import SubscriptionCheckingScreen from "../components/SubscriptionCheckingScreen";
+import BrandMark from "../components/BrandMark";
 
 function formatMoney(amountPaise: number): string {
   return new Intl.NumberFormat("en-IN", {
@@ -103,7 +104,7 @@ export default function Subscribe() {
         setSelectedPriceId(annualPrice?.id ?? monthlyPrice?.id ?? "");
       } catch {
         setError(
-          "Unable to load Taxlume subscription plans. Please try again.",
+          "Unable to load Techabanca Billing subscription plans. Please try again.",
         );
       } finally {
         setIsLoading(false);
@@ -150,7 +151,7 @@ export default function Subscribe() {
 
         subscription_id: result.checkout.provider_subscription_id,
 
-        name: "Taxlume",
+        name: "Techabanca Billing",
 
         description: `${result.checkout.plan_name} - ${
           result.checkout.billing_interval === "ANNUAL" ? "Annual" : "Monthly"
@@ -159,7 +160,7 @@ export default function Subscribe() {
         handler: async () => {
           try {
             setPaymentMessage(
-              "Payment completed. Verifying your Taxlume subscription...",
+              "Payment completed. Verifying your Techabanca Billing subscription...",
             );
 
             /*
@@ -219,7 +220,7 @@ export default function Subscribe() {
             );
 
             setPaymentMessage(
-              "Payment was received, but Taxlume could not confirm the subscription yet. Please try again shortly.",
+              "Payment was received, but Techabanca Billing could not confirm the subscription yet. Please try again shortly.",
             );
 
             setIsStartingPayment(false);
@@ -263,14 +264,12 @@ export default function Subscribe() {
     <div className="min-h-screen bg-slate-100 px-4 py-10">
       <div className="mx-auto w-full max-w-5xl">
         <div className="mb-10 text-center">
-          <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-900 text-2xl font-bold text-white shadow-lg">
-            T
-          </div>
+          <BrandMark className="h-14 w-14 drop-shadow-lg" />
 
-          <h1 className="mt-4 text-3xl font-bold text-slate-900">Taxlume</h1>
+          <h1 className="mt-4 text-3xl font-bold text-slate-900">Techabanca Billing</h1>
 
           <p className="mt-2 text-sm font-medium text-slate-600">
-            Smart Billing for Growing Businesses
+            Smart billing for growing businesses
           </p>
         </div>
 
@@ -280,7 +279,7 @@ export default function Subscribe() {
           </h2>
 
           <p className="mt-2 text-sm text-slate-500">
-            Select a billing option to continue using Taxlume.
+            Select a billing option to continue using Techabanca Billing.
           </p>
         </div>
 
@@ -504,7 +503,7 @@ export default function Subscribe() {
         </div>
 
         <p className="mt-6 text-center text-xs text-slate-400">
-          © {new Date().getFullYear()} Taxlume
+          © {new Date().getFullYear()} Techabanca Billing
         </p>
       </div>
     </div>

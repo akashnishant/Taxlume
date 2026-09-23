@@ -137,7 +137,7 @@ export default function TaxSummaryReport({ startDate, endDate }: Props) {
       const link = document.createElement("a");
 
       link.href = url;
-      link.download = `taxlume-document-tax-summary-${data.filters.start_date}-to-${data.filters.end_date}.csv`;
+      link.download = `techabanca-billing-document-tax-summary-${data.filters.start_date}-to-${data.filters.end_date}.csv`;
 
       document.body.appendChild(link);
       link.click();
@@ -298,7 +298,7 @@ export default function TaxSummaryReport({ startDate, endDate }: Props) {
       )}
 
       <p className="mt-5 text-xs text-slate-500">
-        Figures reflect tax recorded on issued tax invoices in Taxlume. This
+        Figures reflect tax recorded on issued tax invoices in Techabanca Billing. This
         document summary is not a filed GST return or a calculation of final tax
         payable.
       </p>

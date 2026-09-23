@@ -12,7 +12,7 @@ const LoginRequest = z.object({
 export class Login extends OpenAPIRoute {
     schema = {
         tags: ["Authentication"],
-        summary: "Authenticate a Taxlume user",
+        summary: "Authenticate a Techabanca Billing user",
         request: {
             body: {
                 content: {

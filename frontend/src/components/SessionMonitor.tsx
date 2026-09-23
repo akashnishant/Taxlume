@@ -279,7 +279,7 @@ export default function SessionMonitor() {
           className="mt-3 text-sm leading-6 text-slate-600"
         >
           You have been inactive for nearly 30 minutes. To protect your account,
-          Taxlume will sign you out unless you choose to stay signed in.
+          Techabanca Billing will sign you out unless you choose to stay signed in.
         </p>
 
         <div className="mt-5 flex items-center gap-3 rounded-xl bg-amber-50 p-4 text-amber-900">

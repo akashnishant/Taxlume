@@ -153,7 +153,7 @@ export default function PricingSection() {
     >
       <div className="mx-auto max-w-7xl">
         <div className="mx-auto max-w-3xl text-center">
-          <span className="text-xs font-bold uppercase tracking-[0.2em] text-indigo-600">
+          <span className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-800">
             Pricing
           </span>
 
@@ -165,7 +165,7 @@ export default function PricingSection() {
           </h2>
 
           <p className="mt-4 text-base leading-7 text-slate-600">
-            Review Taxlume's currently available plans and billing intervals.
+            Review Techabanca Billing's currently available plans and billing intervals.
             Create your account to choose a subscription and continue to
             payment.
           </p>
@@ -179,7 +179,7 @@ export default function PricingSection() {
           >
             <span
               aria-hidden="true"
-              className="h-9 w-9 animate-spin rounded-full border-4 border-indigo-100 border-t-indigo-600"
+              className="h-9 w-9 animate-spin rounded-full border-4 border-emerald-100 border-t-emerald-800"
             />
 
             <p className="mt-5 text-sm font-semibold text-slate-800">
@@ -187,7 +187,7 @@ export default function PricingSection() {
             </p>
 
             <p className="mt-1 text-sm text-slate-500">
-              Checking available Taxlume plans and billing options.
+              Checking available Techabanca Billing plans and billing options.
             </p>
           </div>
         ) : error ? (
@@ -243,7 +243,7 @@ export default function PricingSection() {
                           {plan.name}
                         </h3>
 
-                        <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
+                        <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
                           Subscription plan
                         </span>
                       </div>
@@ -278,7 +278,7 @@ export default function PricingSection() {
                     <div className="mt-auto pt-8">
                       <Link
                         to="/register"
-                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-3.5 text-sm font-bold text-white transition hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-800 px-5 py-3.5 text-sm font-bold text-white transition hover:bg-emerald-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-800"
                       >
                         Get started
                         <ArrowRight size={17} aria-hidden="true" />
@@ -297,11 +297,11 @@ export default function PricingSection() {
 
             <div className="mt-10 rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
               <h3 className="text-lg font-bold text-slate-950">
-                Work with your business records in Taxlume
+                Work with your business records in Techabanca Billing
               </h3>
 
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Taxlume's workspace provides these capabilities. Any
+                Techabanca Billing's workspace provides these capabilities. Any
                 plan-specific terms or limits should be checked when selecting
                 your subscription.
               </p>
@@ -326,7 +326,7 @@ export default function PricingSection() {
         )}
 
         <p className="mx-auto mt-7 max-w-3xl text-center text-xs leading-6 text-slate-500">
-          Prices are retrieved from Taxlume's current plan list. Available
+          Prices are retrieved from Techabanca Billing's current plan list. Available
           billing options may change. Review the subscription details and final
           payable amount before completing payment.
         </p>

@@ -103,7 +103,7 @@ const RegisterRequest = z.object({
 export class Register extends OpenAPIRoute {
     schema = {
         tags: ["Authentication"],
-        summary: "Register a new Taxlume user and company",
+        summary: "Register a new Techabanca Billing user and company",
         request: {
             body: {
                 content: {

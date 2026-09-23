@@ -8,7 +8,7 @@ type RazorpaySubscriptionStatus =
     | "completed"
     | "expired";
 
-type TaxlumeSubscriptionStatus =
+type BillingSubscriptionStatus =
     | "PENDING_PAYMENT"
     | "ACTIVE"
     | "PAST_DUE"
@@ -26,7 +26,7 @@ export type RazorpayWebhookSubscription = {
 
 function mapRazorpayStatus(
     status: RazorpaySubscriptionStatus,
-): TaxlumeSubscriptionStatus {
+): BillingSubscriptionStatus {
     switch (status) {
         case "created":
         case "authenticated":
@@ -70,7 +70,7 @@ export async function applyRazorpaySubscriptionState(
 ): Promise<{
     applied: boolean;
 }> {
-    const taxlumeStatus =
+    const billingStatus =
         mapRazorpayStatus(
             input.subscription.status,
         );
@@ -173,21 +173,21 @@ export async function applyRazorpaySubscriptionState(
                     )
             `)
             .bind(
-                taxlumeStatus,
+                billingStatus,
                 input.subscription.status,
 
-                taxlumeStatus,
+                billingStatus,
                 currentPeriodStart,
                 eventDate,
 
                 currentPeriodStart,
                 currentPeriodEnd,
 
-                taxlumeStatus,
+                billingStatus,
                 providerEndedAt,
                 eventDate,
 
-                taxlumeStatus,
+                billingStatus,
                 providerEndedAt,
                 eventDate,
 

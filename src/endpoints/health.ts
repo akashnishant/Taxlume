@@ -44,7 +44,7 @@ export class HealthCheck extends OpenAPIRoute {
 
             return {
                 success: true,
-                message: "Taxlume API is running",
+                message: "Techabanca Billing API is running",
                 database: "connected",
             };
         } catch (error) {
