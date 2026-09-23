@@ -56,31 +56,34 @@ import { subscriptionMiddleware } from "./middleware/subscription";
 // Start a Hono app
 const app = new Hono<{ Bindings: Env }>();
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://billing.techabanca.com",
+  "https://taxlume.pages.dev",
+  "https://techabanca-rebrand.taxlume.pages.dev",
+];
+
 app.use(
-    "*",
-    cors({
-        origin: [
-            "http://localhost:5173",
-            "http://127.0.0.1:5173",
-            "https://taxlume.pages.dev",
-            "https://techabanca-rebrand.taxlume.pages.dev",
-            "https://billing.techabanca.in",
-        ],
+  "*",
+  cors({
+    origin: (origin) => {
+      if (allowedOrigins.includes(origin)) {
+        return origin;
+      }
 
-        allowMethods: [
-            "GET",
-            "POST",
-            "PUT",
-            "PATCH",
-            "DELETE",
-            "OPTIONS",
-        ],
+      // Keep Cloudflare Pages deployment previews working
+      if (
+        origin.endsWith(".taxlume.pages.dev") &&
+        origin.startsWith("https://")
+      ) {
+        return origin;
+      }
 
-        allowHeaders: [
-            "Content-Type",
-            "Authorization",
-        ],
-    }),
+      return "";
+    },
+    allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowHeaders: ["Content-Type", "Authorization"],
+  }),
 );
 
 // Setup OpenAPI registry
