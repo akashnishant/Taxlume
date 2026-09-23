@@ -5,6 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { register as registerAccount } from "../services/authApi";
 import { gstStates } from "../constants/gstStates";
 import ButtonLoadingContent from "../components/ButtonLoadingContent";
+import BrandMark from "../components/BrandMark";
 
 type RegisterForm = {
   fullName: string;
@@ -214,27 +215,25 @@ export default function Register() {
         <div className="mb-8 text-center">
           <Link
             to="/welcome"
-            aria-label="Go to Taxlume landing page"
-            className="inline-flex flex-col items-center rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-indigo-600"
+            aria-label="Go to Techabanca Billing landing page"
+            className="inline-flex flex-col items-center rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-800"
           >
-            <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-900 text-2xl font-bold text-white shadow-lg">
-              T
-            </span>
+            <BrandMark className="h-14 w-14 drop-shadow-lg" />
 
             <span className="mt-4 text-3xl font-bold text-slate-900">
-              Taxlume
+              Techabanca Billing
             </span>
           </Link>
 
           <p className="mt-2 text-sm font-medium text-slate-600">
-            Smart Billing for Growing Businesses
+            Smart billing for growing businesses
           </p>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl sm:p-8">
           <div className="mb-7">
             <h2 className="text-2xl font-semibold text-slate-900">
-              Create your Taxlume account
+              Create your Techabanca Billing account
             </h2>
 
             <p className="mt-1 text-sm text-slate-500">
@@ -602,7 +601,7 @@ export default function Register() {
             <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
               <p className="text-sm text-slate-600">
                 Creating an account does not activate a subscription. You will
-                choose your Taxlume billing plan after registration.
+                choose your Techabanca Billing plan after registration.
               </p>
             </div>
 
@@ -614,7 +613,7 @@ export default function Register() {
               {isLoading ? (
                 <ButtonLoadingContent message="Creating account..." />
               ) : (
-                "Create Taxlume account"
+                "Create Techabanca Billing account"
               )}
             </button>
           </form>
@@ -631,7 +630,7 @@ export default function Register() {
         </div>
 
         <p className="mt-6 text-center text-xs text-slate-400">
-          © {new Date().getFullYear()} Taxlume
+          © {new Date().getFullYear()} Techabanca Billing
         </p>
       </div>
     </div>

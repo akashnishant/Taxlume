@@ -295,7 +295,7 @@ export default function Reports() {
       const link = document.createElement("a");
 
       link.href = url;
-      link.download = `taxlume-${exportReportType === "sales" ? "sales-register" : "purchase-order-register"}-${startDate}-to-${endDate}.csv`;
+      link.download = `techabanca-billing-${exportReportType === "sales" ? "sales-register" : "purchase-order-register"}-${startDate}-to-${endDate}.csv`;
 
       document.body.appendChild(link);
       link.click();
@@ -735,8 +735,8 @@ export default function Reports() {
 
           <p className="mt-5 text-xs text-slate-500">
             {isSalesReport
-              ? "Figures are based on issued tax invoices recorded in Taxlume. This report is not a filed GST return."
-              : "Figures are based on issued purchase orders recorded in Taxlume. Order amounts are not proof of completed purchases, and tax recorded on purchase orders is not necessarily eligible input tax credit."}
+              ? "Figures are based on issued tax invoices recorded in Techabanca Billing. This report is not a filed GST return."
+              : "Figures are based on issued purchase orders recorded in Techabanca Billing. Order amounts are not proof of completed purchases, and tax recorded on purchase orders is not necessarily eligible input tax credit."}
           </p>
         </>
       )}

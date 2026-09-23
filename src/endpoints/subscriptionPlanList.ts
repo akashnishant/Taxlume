@@ -42,7 +42,7 @@ type SubscriptionPlan = {
 export class SubscriptionPlanList extends OpenAPIRoute {
     schema = {
         tags: ["Subscriptions"],
-        summary: "List active Taxlume subscription plans",
+        summary: "List active Techabanca Billing subscription plans",
 
         responses: {
             "200": {

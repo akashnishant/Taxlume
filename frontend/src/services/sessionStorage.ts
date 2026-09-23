@@ -2,12 +2,12 @@ import type { LoginResponse } from "./authApi";
 
 const SESSION_KEY = "billdesk_session";
 
-export type TaxlumeSession = {
+export type BillingSession = {
     user: LoginResponse["user"];
     company: LoginResponse["company"];
 };
 
-export function getSession(): TaxlumeSession | null {
+export function getSession(): BillingSession | null {
     const value = localStorage.getItem(SESSION_KEY);
 
     if (!value) {
@@ -15,7 +15,7 @@ export function getSession(): TaxlumeSession | null {
     }
 
     try {
-        return JSON.parse(value) as TaxlumeSession;
+        return JSON.parse(value) as BillingSession;
     } catch {
         localStorage.removeItem(SESSION_KEY);
         return null;
@@ -23,7 +23,7 @@ export function getSession(): TaxlumeSession | null {
 }
 
 export function setSession(
-    session: TaxlumeSession,
+    session: BillingSession,
 ): void {
     localStorage.setItem(
         SESSION_KEY,

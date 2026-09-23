@@ -558,7 +558,7 @@ export default function InvoicePaymentsPanel({
           </h2>
 
           <p className="mt-1 text-sm text-slate-500">
-            Record payments already received from your customer. Taxlume does
+            Record payments already received from your customer. Techabanca Billing does
             not collect or verify these payments.
           </p>
         </div>

@@ -17,6 +17,7 @@ import { Link, NavLink, Outlet } from "react-router-dom";
 import { getSession } from "../services/sessionStorage";
 import { getCompany, type Company } from "../services/companyApi";
 import { endSession } from "../services/endSession";
+import BrandMark from "../components/BrandMark";
 
 const navigation = [
   {
@@ -121,11 +122,11 @@ export default function AppLayout() {
             className="flex items-center gap-3"
             onClick={() => setSidebarOpen(false)}
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-900 text-lg font-bold text-white">
-              T
-            </div>
-
-            <span className="text-lg font-bold text-slate-900">Taxlume</span>
+            <BrandMark className="h-9 w-9" />
+            <span className="flex flex-col leading-tight text-slate-900">
+              <span className="text-base font-bold tracking-tight">Techabanca</span>
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-800">Billing</span>
+            </span>
           </Link>
 
           <button

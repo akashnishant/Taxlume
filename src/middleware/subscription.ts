@@ -55,7 +55,7 @@ export const subscriptionMiddleware =
                     success: false,
                     code: "SUBSCRIPTION_REQUIRED",
                     message:
-                        "An active Taxlume subscription is required.",
+                        "An active Techabanca Billing subscription is required.",
                 },
                 402,
             );

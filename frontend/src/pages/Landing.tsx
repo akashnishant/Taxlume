@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import PricingSection from "../components/PricingSection";
+import BrandMark from "../components/BrandMark";
 
 const features = [
   {
@@ -58,7 +59,7 @@ const features = [
 
 const faqs = [
   {
-    question: "What can I do with Taxlume?",
+    question: "What can I do with Techabanca Billing?",
     answer:
       "You can create business documents, maintain customers, vendors, and products, record invoice payments, and review business dashboards and reports.",
   },
@@ -75,7 +76,7 @@ const faqs = [
   {
     question: "Does creating an account activate a subscription?",
     answer:
-      "No. After registration, you can sign in and choose an available Taxlume billing plan.",
+      "No. After registration, you can sign in and choose an available Techabanca Billing plan.",
   },
 ];
 
@@ -83,22 +84,19 @@ function Brand({ light = false }: { light?: boolean }) {
   return (
     <a
       href="#top"
-      aria-label="Back to the top of the Taxlume landing page"
+      aria-label="Back to the top of the Techabanca Billing landing page"
       className="inline-flex items-center gap-3"
     >
+      <BrandMark />
       <span
-        className={`flex h-10 w-10 items-center justify-center rounded-xl text-xl font-black shadow-lg ${
-          light ? "bg-white text-slate-950" : "bg-slate-950 text-white"
-        }`}
-      >
-        T
-      </span>
-      <span
-        className={`text-xl font-bold tracking-tight ${
+        className={`flex flex-col text-base font-bold leading-tight tracking-tight sm:text-lg ${
           light ? "text-white" : "text-slate-950"
         }`}
       >
-        Taxlume
+        <span>Techabanca</span>
+        <span className={`text-[10px] uppercase tracking-[0.2em] ${
+          light ? "text-lime-300" : "text-emerald-800"
+        }`}>Billing</span>
       </span>
     </a>
   );
@@ -117,7 +115,7 @@ function PrimaryLink({
       className={`inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-sm font-bold shadow-lg transition hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-4 ${
         dark
           ? "bg-slate-950 text-white shadow-slate-950/15 hover:bg-slate-800 focus-visible:outline-slate-950"
-          : "bg-indigo-500 text-white shadow-indigo-500/20 hover:bg-indigo-400 focus-visible:outline-indigo-400"
+          : "bg-lime-300 text-slate-950 shadow-lime-300/20 hover:bg-lime-200 focus-visible:outline-lime-300"
       }`}
     >
       {children}
@@ -139,7 +137,7 @@ function WorkspacePreview() {
 
   return (
     <div className="relative mx-auto w-full max-w-[640px]">
-      <div className="pointer-events-none absolute -inset-5 rounded-[2rem] bg-indigo-400/15 blur-3xl" />
+      <div className="pointer-events-none absolute -inset-5 rounded-[2rem] bg-lime-400/15 blur-3xl" />
 
       <div className="relative overflow-hidden rounded-[1.5rem] border border-white/20 bg-white shadow-[0_35px_100px_-25px_rgba(2,6,23,0.7)]">
         <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 sm:px-5">
@@ -152,7 +150,7 @@ function WorkspacePreview() {
             </span>
           </div>
 
-          <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-[10px] font-semibold text-indigo-700">
+          <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-semibold text-emerald-800">
             SAMPLE WORKSPACE
           </span>
         </div>
@@ -166,7 +164,7 @@ function WorkspacePreview() {
               <p className="mt-2 text-lg font-bold text-slate-900 sm:text-2xl">
                 ₹2,40,000
               </p>
-              <span className="mt-2 inline-block rounded-md bg-indigo-50 px-2 py-1 text-[10px] font-semibold text-indigo-700">
+              <span className="mt-2 inline-block rounded-md bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-800">
                 Excluding tax
               </span>
             </div>
@@ -196,7 +194,7 @@ function WorkspacePreview() {
               </div>
               <BarChart3
                 size={18}
-                className="text-indigo-500"
+                className="text-teal-600"
                 aria-hidden="true"
               />
             </div>
@@ -212,7 +210,7 @@ function WorkspacePreview() {
                   className="flex h-full flex-1 items-end justify-center gap-1"
                 >
                   <span
-                    className="w-full max-w-5 rounded-t bg-indigo-500"
+                    className="w-full max-w-5 rounded-t bg-teal-600"
                     style={{ height: `${bar.sales}%` }}
                   />
                   <span
@@ -225,7 +223,7 @@ function WorkspacePreview() {
 
             <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[11px] font-medium text-slate-600">
               <span>
-                <span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-indigo-500" />
+                <span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-teal-600" />
                 Sales
               </span>
               <span>
@@ -264,8 +262,8 @@ export default function Landing() {
   return (
     <div id="top" className="min-h-screen bg-slate-50 text-slate-900">
       <div className="relative overflow-hidden bg-slate-950 text-white">
-        <div className="pointer-events-none absolute -left-32 top-28 h-80 w-80 rounded-full bg-indigo-600/20 blur-3xl" />
-        <div className="pointer-events-none absolute -right-24 top-0 h-96 w-96 rounded-full bg-cyan-500/10 blur-3xl" />
+        <div className="pointer-events-none absolute -left-32 top-28 h-80 w-80 rounded-full bg-lime-400/10 blur-3xl" />
+        <div className="pointer-events-none absolute -right-24 top-0 h-96 w-96 rounded-full bg-emerald-500/10 blur-3xl" />
 
         <header className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-slate-950/95 text-white shadow-lg shadow-slate-950/10 backdrop-blur-xl">
           <div className="mx-auto grid max-w-7xl grid-cols-[1fr_auto] items-center gap-4 px-5 py-4 sm:px-8 lg:grid-cols-[1fr_auto_1fr] lg:px-10">
@@ -292,13 +290,13 @@ export default function Landing() {
             <div className="hidden items-center justify-end gap-3 lg:flex">
               <Link
                 to="/login"
-                className="px-3 py-2 text-sm font-semibold text-white hover:text-indigo-200"
+                className="px-3 py-2 text-sm font-semibold text-white hover:text-lime-200"
               >
                 Sign in
               </Link>
               <Link
                 to="/register"
-                className="rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-slate-950 transition hover:bg-indigo-50"
+                className="rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-slate-950 transition hover:bg-lime-100"
               >
                 Get started
               </Link>
@@ -361,7 +359,7 @@ export default function Landing() {
                 <Link
                   to="/register"
                   onClick={closeMenu}
-                  className="mt-2 rounded-lg bg-indigo-500 px-3 py-3 text-center text-sm font-bold text-white"
+                  className="mt-2 rounded-lg bg-lime-300 px-3 py-3 text-center text-sm font-bold text-slate-950"
                 >
                   Get started
                 </Link>
@@ -373,14 +371,14 @@ export default function Landing() {
         <main>
           <section className="relative mx-auto grid max-w-7xl items-center gap-14 px-5 pb-20 pt-32 sm:px-8 lg:grid-cols-2 lg:gap-10 lg:px-10 lg:pb-28 lg:pt-40">
             <div className="max-w-2xl">
-              <div className="inline-flex items-center gap-2 rounded-full border border-indigo-300/20 bg-indigo-400/10 px-3 py-1.5 text-xs font-semibold text-indigo-200">
+              <div className="inline-flex items-center gap-2 rounded-full border border-lime-300/20 bg-lime-300/10 px-3 py-1.5 text-xs font-semibold text-lime-200">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
                 BILLING • COLLECTIONS • REPORTS
               </div>
 
               <h1 className="mt-7 text-4xl font-extrabold leading-[1.12] tracking-tight sm:text-5xl lg:text-[3.5rem]">
                 Less paperwork.
-                <span className="mt-2 block text-indigo-300">
+                <span className="mt-2 block text-lime-300">
                   More clarity for your business.
                 </span>
               </h1>
@@ -388,15 +386,15 @@ export default function Landing() {
               <p className="mt-6 max-w-xl text-base leading-8 text-slate-300 sm:text-lg">
                 Create invoices, organize customers and products, track
                 payments, and understand business activity — all from one
-                Taxlume workspace.
+                Techabanca Billing workspace.
               </p>
 
               <div className="mt-9 flex flex-wrap items-center gap-4">
-                <PrimaryLink>Get started with Taxlume</PrimaryLink>
+                <PrimaryLink>Get started with Techabanca Billing</PrimaryLink>
 
                 <a
                   href="#features"
-                  className="inline-flex items-center gap-2 rounded-xl px-2 py-3 text-sm font-semibold text-white hover:text-indigo-200"
+                  className="inline-flex items-center gap-2 rounded-xl px-2 py-3 text-sm font-semibold text-white hover:text-lime-200"
                 >
                   Explore features
                   <ArrowUpRight size={17} aria-hidden="true" />
@@ -426,7 +424,7 @@ export default function Landing() {
       >
         <div className="mx-auto max-w-7xl">
           <div className="max-w-2xl">
-            <span className="text-xs font-bold uppercase tracking-[0.2em] text-indigo-600">
+            <span className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-800">
               What you can do
             </span>
             <h2 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">
@@ -445,9 +443,9 @@ export default function Landing() {
               return (
                 <article
                   key={feature.title}
-                  className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-indigo-200 hover:shadow-xl hover:shadow-slate-200/60"
+                  className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-emerald-200 hover:shadow-xl hover:shadow-slate-200/60"
                 >
-                  <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+                  <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-800">
                     <Icon size={23} aria-hidden="true" />
                   </span>
                   <h3 className="mt-5 text-lg font-bold">{feature.title}</h3>
@@ -467,7 +465,7 @@ export default function Landing() {
       >
         <div className="mx-auto max-w-7xl">
           <div className="max-w-2xl">
-            <span className="text-xs font-bold uppercase tracking-[0.2em] text-indigo-600">
+            <span className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-800">
               Getting started
             </span>
             <h2 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">
@@ -475,7 +473,7 @@ export default function Landing() {
             </h2>
             <p className="mt-4 text-base leading-7 text-slate-600">
               Set up your account and firm, choose a billing plan, and start
-              working with Taxlume.
+              working with Techabanca Billing.
             </p>
           </div>
 
@@ -508,7 +506,7 @@ export default function Landing() {
                   className="rounded-2xl border border-slate-200 bg-slate-50 p-7"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-black tracking-widest text-indigo-600">
+                    <span className="text-sm font-black tracking-widest text-emerald-800">
                       {step.number}
                     </span>
                     <Icon
@@ -531,9 +529,9 @@ export default function Landing() {
       <PricingSection />
 
       <section className="px-5 py-20 sm:px-8 lg:py-24">
-        <div className="mx-auto grid max-w-7xl items-center gap-8 overflow-hidden rounded-[2rem] bg-indigo-50 p-7 sm:p-10 lg:grid-cols-[1fr_auto] lg:p-14">
+        <div className="mx-auto grid max-w-7xl items-center gap-8 overflow-hidden rounded-[2rem] bg-emerald-50 p-7 sm:p-10 lg:grid-cols-[1fr_auto] lg:p-14">
           <div>
-            <span className="text-xs font-bold uppercase tracking-[0.2em] text-indigo-600">
+            <span className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-800">
               Made for business owners
             </span>
             <h2 className="mt-3 max-w-2xl text-3xl font-extrabold tracking-tight sm:text-4xl">
@@ -556,7 +554,7 @@ export default function Landing() {
       >
         <div className="mx-auto max-w-4xl">
           <div className="text-center">
-            <span className="text-xs font-bold uppercase tracking-[0.2em] text-indigo-600">
+            <span className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-800">
               FAQs
             </span>
             <h2 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">
@@ -568,7 +566,7 @@ export default function Landing() {
             {faqs.map((faq) => (
               <details
                 key={faq.question}
-                className="group rounded-xl border border-slate-200 bg-white px-5 py-4 open:border-indigo-200 open:bg-indigo-50/30"
+                className="group rounded-xl border border-slate-200 bg-white px-5 py-4 open:border-emerald-200 open:bg-emerald-50/30"
               >
                 <summary className="flex list-none items-center justify-between gap-4 text-left text-sm font-bold text-slate-900 [&::-webkit-details-marker]:hidden">
                   {faq.question}
@@ -590,14 +588,14 @@ export default function Landing() {
       <section className="bg-slate-950 px-5 py-20 text-white sm:px-8">
         <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-8 lg:flex-row lg:items-center">
           <div>
-            <p className="text-sm font-semibold text-indigo-300">
+            <p className="text-sm font-semibold text-lime-300">
               YOUR BUSINESS. ONE WORKSPACE.
             </p>
             <h2 className="mt-3 max-w-xl text-3xl font-extrabold tracking-tight sm:text-4xl">
               Bring your billing and business records together.
             </h2>
           </div>
-          <PrimaryLink>Get started with Taxlume</PrimaryLink>
+          <PrimaryLink>Get started with Techabanca Billing</PrimaryLink>
         </div>
       </section>
 
@@ -605,7 +603,7 @@ export default function Landing() {
         <div className="mx-auto flex max-w-7xl flex-col gap-5 border-t border-white/10 pt-8 sm:flex-row sm:items-center sm:justify-between">
           <Brand light />
           <p className="text-xs">
-            © {new Date().getFullYear()} Taxlume. All rights reserved.
+            © {new Date().getFullYear()} Techabanca Billing. All rights reserved.
           </p>
           <Link to="/login" className="text-sm hover:text-white">
             Sign in

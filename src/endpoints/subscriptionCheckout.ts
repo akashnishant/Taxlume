@@ -63,7 +63,7 @@ export class SubscriptionCheckout extends OpenAPIRoute {
     schema = {
         tags: ["Subscriptions"],
         summary:
-            "Create a payment checkout for a Taxlume subscription",
+            "Create a payment checkout for a Techabanca Billing subscription",
 
         request: {
             body: {
@@ -204,7 +204,7 @@ export class SubscriptionCheckout extends OpenAPIRoute {
                     code:
                         "ACTIVE_SUBSCRIPTION_EXISTS",
                     message:
-                        "This company already has an active Taxlume subscription.",
+                        "This company already has an active Techabanca Billing subscription.",
                 },
                 409,
             );
@@ -212,7 +212,7 @@ export class SubscriptionCheckout extends OpenAPIRoute {
 
         /*
          * Reuse an already-created Razorpay
-         * subscription for the same Taxlume
+         * subscription for the same Techabanca Billing
          * price. This protects against repeated
          * clicks and page reloads.
          */
@@ -378,7 +378,7 @@ export class SubscriptionCheckout extends OpenAPIRoute {
                         totalCount,
 
                         /*
-                         * Taxlume owns the checkout
+                         * Techabanca Billing owns the checkout
                          * experience, so Razorpay
                          * should not separately send
                          * subscription checkout
