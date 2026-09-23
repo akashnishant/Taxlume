@@ -18,7 +18,7 @@ jobs:
 
     env:
       # Switch to a custom Worker hostname later through the repository variable.
-      VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL || 'https://billdesk.akashnishant25.workers.dev' }}
+      VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL || 'https://billing-api.techabanca.com' }}
 
     steps:
       - name: Checkout repository
