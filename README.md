@@ -34,6 +34,7 @@ The existing repository has frontend lint findings predating this rebrand; the f
 
 The existing Pages project, Worker, D1 database, R2 bucket, and subscription/price IDs retain their original resource names. This protects existing data and payment links while the product is presented as Techabanca Billing. `migrations/0014_techabanca_billing_brand.sql` updates the displayed subscription plan name only.
 
-See [Pages preview rollout](docs/preview-rollout.md) for reviewing the rebrand before buying a domain, then [Cloudflare deployment](docs/cloudflare-deployment.md) for the eventual production and `billing.techabanca.in` cutover. The GitHub Actions workflows deploy the frontend and Worker when the source is pushed to `main`; they do **not** apply remote database migrations or attach DNS automatically.
+See [Pages preview rollout](docs/preview-rollout.md) for the historical rebrand preview process and [Cloudflare deployment](docs/cloudflare-deployment.md) for the current production topology. Production uses `https://billing.techabanca.com` for the frontend and `https://billing-api.techabanca.com` for the API. The GitHub Actions workflows deploy the frontend and Worker when the source is pushed to `main`; they do **not** apply remote database migrations or attach DNS automatically.
 
 The invoices and other business documents identify the customer's own company. Product branding is kept in the application interface, reports, and subscription checkout.
+

@@ -1,33 +1,79 @@
-# Cloudflare rollout: Techabanca Billing
+# Cloudflare deployment: Techabanca Billing
 
-For the domain-free Pages review while `taxlume.pages.dev` remains the production frontend, use [preview-rollout.md](preview-rollout.md). The steps below apply to the later production/custom-domain cutover.
+Techabanca Billing is deployed on Cloudflare using the existing infrastructure created before the Techabanca rebrand. Internal Cloudflare resource names are intentionally retained to protect existing data, bindings, subscriptions, and deployment history.
+
+## Production topology
+
+| Role | Production endpoint / resource |
+| --- | --- |
+| Company website | `https://techabanca.com` |
+| Billing frontend | `https://billing.techabanca.com` |
+| Billing API | `https://billing-api.techabanca.com` |
+| Cloudflare Pages project | `taxlume` |
+| Cloudflare Worker | `billdesk` |
+| D1 database | `billdesk-db` |
+| R2 bucket | `billdesk-files` |
+
+The original Cloudflare resource names are internal implementation details. The public product is Techabanca Billing.
+
+## Frontend API configuration
+
+The production frontend must be built with:
+
+`VITE_API_BASE_URL=https://billing-api.techabanca.com`
+
+The GitHub Actions Pages workflow uses the repository variable `VITE_API_BASE_URL` when present and otherwise falls back to the production Techabanca Billing API domain.
+
+Do not include a trailing slash in `VITE_API_BASE_URL`.
+
+## CORS
+
+The `billdesk` Worker must explicitly allow the production frontend origin:
+
+`https://billing.techabanca.com`
+
+Cloudflare Pages preview origins may remain in the allowlist when preview deployments are required.
+
+The API custom domain `billing-api.techabanca.com` is attached to the existing `billdesk` Worker. The legacy `workers.dev` hostname may remain available for diagnostics or rollback but is not the production API endpoint used by the frontend.
+
+## Deployment
+
+Pushing applicable changes to `main` triggers the existing GitHub Actions workflows:
+
+- the frontend workflow builds the React/Vite application and deploys `frontend/dist` to the existing `taxlume` Pages project;
+- the Worker workflow deploys the existing `billdesk` Worker.
+
+GitHub Actions does not automatically apply remote D1 migrations.
+
+Database migrations must be reviewed and applied deliberately. Domain or CORS changes by themselves do not require a D1 migration.
+
+## Verification
+
+After a deployment, verify:
+
+1. `https://techabanca.com` loads the Techabanca company website.
+2. `https://billing.techabanca.com` loads Techabanca Billing.
+3. Login and registration call `https://billing-api.techabanca.com`.
+4. The Worker allows CORS from `https://billing.techabanca.com`.
+5. `/api/health` succeeds on the production API domain.
+6. Authenticated application APIs work after sign-in.
+7. Subscription, document, PDF, customer, vendor, and product workflows continue to use the existing production data.
+8. Razorpay plan, price, subscription, and provider identifiers remain unchanged unless a separate payment migration is intentionally performed.
 
 ## Existing resources
 
-| Role | Resource | Action |
-| --- | --- | --- |
-| Frontend | Existing Cloudflare Pages project `taxlume` | Attach `billing.techabanca.in` to this project. The CI workflow continues to deploy to the same project. |
-| API | Existing Worker `billdesk` | Keep the current Worker URL initially. Deploy the new CORS allowlist before directing traffic to the new domain. |
-| Data | D1 `billdesk-db` and R2 `billdesk-files` | Keep the same bindings, data, and storage. Apply migration 0014 to update the displayed plan name. |
-| Payments | Existing Razorpay subscriptions and plan identifiers | Keep their identifiers and webhook URL; only the application and checkout presentation changes. |
+Do not rename or recreate the following merely for branding:
 
-The domain `techabanca.in` must be active in the Cloudflare account that owns the Pages project. Ensure the deployed app has a valid `VITE_API_BASE_URL`: GitHub Actions uses the current Worker URL by default. When a separate API custom domain is ready, set repository variable `VITE_API_BASE_URL` to that origin and redeploy the frontend.
+- Pages project `taxlume`
+- Worker `billdesk`
+- D1 database `billdesk-db`
+- R2 bucket `billdesk-files`
+- existing Razorpay plan, subscription, and provider identifiers
 
-## Rollout
-
-1. Review the pending D1 migration in `migrations/0014_techabanca_billing_brand.sql`. Take a production D1 backup or bookmark. Verify the existing schema and earlier migrations are applied.
-2. Apply the migration with authenticated Wrangler access: `npx wrangler d1 migrations apply billdesk-db --remote`. Confirm the active plan shows `Techabanca Billing Standard` in `/api/subscription-plans`. This leaves IDs, amounts, provider references, and existing subscriptions unchanged.
-3. Deploy the updated Worker and frontend using the existing GitHub Actions workflows, or the equivalent authenticated Wrangler commands. Confirm the Worker is accepting CORS requests from `https://billing.techabanca.in`. Do not include a trailing slash in `VITE_API_BASE_URL`.
-4. In Cloudflare **Workers & Pages → taxlume → Custom domains**, add `billing.techabanca.in` and follow the ownership/DNS prompts. Wait until Cloudflare shows the custom domain as active and its TLS certificate is ready. Preserve the existing `taxlume.pages.dev` hostname during the transition.
-5. Visit the new domain over HTTPS and check `/welcome`, `/login`, `/register`, `/subscribe` and a protected app route. Exercise login, plan loading, a real or test checkout in the appropriate Razorpay environment, document downloads, and sign-out. A move to a new origin requires users to sign in again; browser storage does not travel across domains.
-6. After the app is verified at the new hostname, link the corporate site's `/billing` page to `https://billing.techabanca.in`. If desired, redirect the old `*.pages.dev` hostname through a Cloudflare Bulk Redirect after checking all routes. Keep the legacy CORS origin while it is still in use.
-
-## API custom domain (optional later)
-
-The frontend can continue calling the existing Worker URL; both are hosted on Cloudflare. To add `api.billing.techabanca.in`, attach it as a **Worker Custom Domain** to the existing `billdesk` Worker, verify `/api/health` and the Razorpay webhook path, set repository variable `VITE_API_BASE_URL=https://api.billing.techabanca.in`, then rebuild and check login/checkout. Update the Razorpay dashboard webhook URL only when the new Worker hostname is serving and signature verification is confirmed. Keep the old Worker hostname during the transition.
+The Techabanca rebrand is intentionally separated from the underlying infrastructure identifiers.
 
 ## Rollback
 
-Repoint or detach the Pages custom domain if necessary and redeploy the previous frontend/Worker revision. The migration changes only a display name; legacy plan IDs and payment references still work. Do not roll back by recreating D1, R2, or subscription IDs.
+If a frontend or Worker deployment causes an issue, redeploy a previously verified revision or use Cloudflare deployment rollback facilities.
 
-Cloudflare references: [Pages custom domains](https://developers.cloudflare.com/pages/configuration/custom-domains/), [Worker custom domains](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/), [D1 migrations](https://developers.cloudflare.com/d1/reference/migrations/).
+Do not attempt rollback by recreating D1, R2, subscription IDs, or payment-provider resources.

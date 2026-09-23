@@ -1,12 +1,12 @@
-# Techabanca Billing preview before domain purchase
+# Techabanca Billing preview rollout (historical)
 
-The company website is live at `techabanca-company.pages.dev`. This stage puts the rebranded Billing frontend at `techabanca-rebrand.taxlume.pages.dev` for review. `taxlume.pages.dev` stays on its existing production frontend. A domain purchase is not needed yet.
+This document records the preview rollout used before the production Techabanca domains were activated. The current company website is `https://techabanca.com`. This stage puts the rebranded Billing frontend at `techabanca-rebrand.taxlume.pages.dev` for review. `taxlume.pages.dev` stays on its existing production frontend. A domain purchase is not needed yet.
 
 ## Source and resources
 
 - The prepared rebrand starts from commit `9040790a9ba4cb326f82d4b108c8094fa3d75ac6` on `techabanca-rebrand-base`.
 - The Pages project remains `taxlume`, the Worker remains `billdesk`, D1 remains `billdesk-db`, and R2 remains `billdesk-files`. No plan, price, provider, document, or subscription ID is changed.
-- The frontend calls `https://billdesk.akashnishant25.workers.dev` at build time. Substitute your actual Worker origin if it differs.
+- The frontend calls `https://billing-api.techabanca.com` at build time. Substitute your actual Worker origin if it differs.
 - The API response may still carry the old plan display name until the final release. The preview frontend maps the *exact* legacy name `Taxlume Standard` to `Techabanca Billing Standard` for display and checkout; it preserves custom names and IDs.
 
 ## 1. Add the preview origin to the live Worker
@@ -39,7 +39,7 @@ git switch -c feat/techabanca-billing-preview
 git am "$HOME\Downloads\Techabanca-Billing-Preview.patch"
 Set-Location .\frontend
 npm ci
-$env:VITE_API_BASE_URL = 'https://billdesk.akashnishant25.workers.dev'
+$env:VITE_API_BASE_URL = 'https://billing-api.techabanca.com'
 npm run build
 Set-Location ..
 npx wrangler pages deploy .\frontend\dist --project-name taxlume --branch techabanca-rebrand
@@ -57,6 +57,8 @@ Do **not** merge the rebrand into `main`, run migration `0014`, or deploy the fu
 
 ## Final release after review
 
-From the rebranded source, deploy the full `billdesk` Worker, review pending D1 migrations, apply only the intended `0014_techabanca_billing_brand.sql` remotely, then deploy `frontend/dist` to the production `main` branch of the `taxlume` Pages project. The migration changes only the displayed plan name. Verify auth, an appropriate Razorpay checkout, documents, and subscriptions on the production URL. Keep the old Pages hostname while there is no custom domain. After buying `techabanca.in`, attach `billing.techabanca.in` and update the company site's Billing link.
+From the rebranded source, deploy the full `billdesk` Worker, review pending D1 migrations, apply only the intended `0014_techabanca_billing_brand.sql` remotely, then deploy `frontend/dist` to the production `main` branch of the `taxlume` Pages project. The migration changes only the displayed plan name. Verify auth, an appropriate Razorpay checkout, documents, and subscriptions on the production URL. Keep the old Pages hostname while there is no custom domain. After buying `techabanca.com`, attach `billing.techabanca.com` and update the company site's Billing link.
 
 Cloudflare references: [Pages preview deployments](https://developers.cloudflare.com/pages/configuration/preview-deployments/), [Pages Direct Upload](https://developers.cloudflare.com/pages/get-started/direct-upload/), [D1 migrations](https://developers.cloudflare.com/d1/reference/migrations/).
+
+

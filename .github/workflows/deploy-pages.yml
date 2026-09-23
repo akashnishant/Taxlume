@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      # Switch to a custom Worker hostname later through the repository variable.
+      # Production API domain; the repository variable can override it when required.
       VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL || 'https://billing-api.techabanca.com' }}
 
     steps:
@@ -46,3 +46,4 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy frontend/dist --project-name=taxlume --branch=main
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+
