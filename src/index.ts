@@ -58,6 +58,7 @@ import { ExpenseCreate } from "./endpoints/expenseCreate";
 import { ExpenseGet } from "./endpoints/expenseGet";
 import { ExpenseList } from "./endpoints/expenseList";
 import { ExpenseUpdate } from "./endpoints/expenseUpdate";
+import { ExpenseDelete } from "./endpoints/expenseDelete";
 
 import { authMiddleware } from "./middleware/auth";
 import { subscriptionMiddleware } from "./middleware/subscription";
@@ -265,6 +266,11 @@ openapi.get(
 openapi.put(
     "/api/expenses/:id",
     ExpenseUpdate,
+);
+
+openapi.delete(
+    "/api/expenses/:id",
+    ExpenseDelete,
 );
 
 app.use(
