@@ -49,6 +49,7 @@ import { InvoiceReceiptList } from "./endpoints/invoiceReceiptList";
 import { InvoiceReceiptCreate } from "./endpoints/invoiceReceiptCreate";
 import { InvoiceReceiptReverse } from "./endpoints/invoiceReceiptReverse";
 import { ReportOverview } from "./endpoints/reportOverview";
+import { ExpenseCategoryList } from "./endpoints/expenseCategoryList";
 
 import { authMiddleware } from "./middleware/auth";
 import { subscriptionMiddleware } from "./middleware/subscription";
@@ -181,6 +182,24 @@ openapi.get(
 openapi.get(
   "/api/reports/tax-summary",
   ReportTaxSummary,
+);
+
+// Expense Categories
+app.use(
+    "/api/expense-categories",
+    authMiddleware,
+    subscriptionMiddleware,
+);
+
+app.use(
+    "/api/expense-categories/*",
+    authMiddleware,
+    subscriptionMiddleware,
+);
+
+openapi.get(
+    "/api/expense-categories",
+    ExpenseCategoryList,
 );
 
 app.use(
