@@ -55,6 +55,8 @@ import { ExpenseCategoryGet } from "./endpoints/expenseCategoryGet";
 import { ExpenseCategoryUpdate } from "./endpoints/expenseCategoryUpdate";
 import { ExpenseCategoryStatus } from "./endpoints/expenseCategoryStatus";
 import { ExpenseCreate } from "./endpoints/expenseCreate";
+import { ExpenseGet } from "./endpoints/expenseGet";
+import { ExpenseList } from "./endpoints/expenseList";
 
 import { authMiddleware } from "./middleware/auth";
 import { subscriptionMiddleware } from "./middleware/subscription";
@@ -242,6 +244,21 @@ app.use(
 openapi.post(
     "/api/expenses",
     ExpenseCreate,
+);
+
+openapi.post(
+    "/api/expenses",
+    ExpenseCreate,
+);
+
+openapi.get(
+    "/api/expenses",
+    ExpenseList,
+);
+
+openapi.get(
+    "/api/expenses/:id",
+    ExpenseGet,
 );
 
 app.use(
