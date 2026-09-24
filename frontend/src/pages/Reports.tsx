@@ -366,7 +366,7 @@ export default function Reports() {
               aria-pressed={reportType === tab.value}
               className={`rounded-lg px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
                 reportType === tab.value
-                  ? "bg-slate-900 text-white"
+                  ? "bg-lime-300 text-slate-950"
                   : "bg-slate-100 text-slate-600 hover:bg-slate-200"
               }`}
             >
@@ -444,7 +444,7 @@ export default function Reports() {
               <button
                 type="submit"
                 disabled={isLoading || isExporting}
-                className="rounded-lg bg-slate-900 px-5 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-lg bg-lime-300 px-5 py-2 text-sm font-semibold text-slate-950 transition hover:bg-lime-200 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Apply Filters
               </button>
@@ -484,7 +484,7 @@ export default function Reports() {
           <button
             type="button"
             onClick={() => setRetryKey((current) => current + 1)}
-            className="mt-4 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700"
+            className="mt-4 rounded-lg bg-lime-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-lime-200"
           >
             Try again
           </button>
@@ -614,7 +614,7 @@ export default function Reports() {
                       type="button"
                       onClick={() => void exportSalesRegisterCsv()}
                       disabled={isExporting || isLoading}
-                      className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="inline-flex items-center gap-2 rounded-lg bg-lime-300 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-lime-200 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <Download size={16} />
 

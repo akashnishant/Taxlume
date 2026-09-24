@@ -18,6 +18,7 @@ import InvoiceCollectionStatusChart from "./InvoiceCollectionStatusChart";
 import TopCustomersChart from "./TopCustomersChart";
 import CollectionsByMethodChart from "./CollectionsByMethodChart";
 import LoadingState from "./LoadingState";
+import { chartColors } from "../theme/brandColors";
 
 type DateRange = {
   startDate: string;
@@ -307,7 +308,7 @@ export default function BusinessAnalyticsOverview({
           <button
             type="submit"
             disabled={isLoading}
-            className="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-lg bg-lime-300 px-5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-lime-200 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Apply
           </button>
@@ -343,7 +344,7 @@ export default function BusinessAnalyticsOverview({
           <button
             type="button"
             onClick={() => setRetryKey((current) => current + 1)}
-            className="mt-3 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+            className="mt-3 rounded-lg bg-lime-300 px-4 py-2 text-sm font-semibold text-slate-950"
           >
             Try again
           </button>
@@ -433,19 +434,19 @@ export default function BusinessAnalyticsOverview({
                       >
                         <stop
                           offset="0%"
-                          stopColor="#6366f1"
+                          stopColor={chartColors.sales}
                           stopOpacity={0.22}
                         />
                         <stop
                           offset="100%"
-                          stopColor="#6366f1"
+                          stopColor={chartColors.sales}
                           stopOpacity={0}
                         />
                       </linearGradient>
                     </defs>
 
                     <CartesianGrid
-                      stroke="#e2e8f0"
+                      stroke={chartColors.grid}
                       strokeDasharray="3 3"
                       vertical={false}
                     />
@@ -460,7 +461,7 @@ export default function BusinessAnalyticsOverview({
                       interval="preserveStartEnd"
                       minTickGap={24}
                       tickMargin={10}
-                      tick={{ fontSize: 11, fill: "#64748b" }}
+                      tick={{ fontSize: 11, fill: chartColors.axis }}
                       axisLine={false}
                       tickLine={false}
                     />
@@ -470,7 +471,7 @@ export default function BusinessAnalyticsOverview({
                       tickFormatter={(value: number) =>
                         formatCompactMoney(value, currencyCode)
                       }
-                      tick={{ fontSize: 11, fill: "#64748b" }}
+                      tick={{ fontSize: 11, fill: chartColors.axis }}
                       axisLine={false}
                       tickLine={false}
                     />
@@ -491,7 +492,7 @@ export default function BusinessAnalyticsOverview({
                       type="monotone"
                       dataKey="sales"
                       name="Sales excluding tax"
-                      stroke="#4f46e5"
+                      stroke={chartColors.sales}
                       strokeWidth={2.5}
                       fill="url(#billingSalesGradient)"
                       dot={false}
@@ -502,7 +503,7 @@ export default function BusinessAnalyticsOverview({
                       type="monotone"
                       dataKey="collections"
                       name="Recorded collections"
-                      stroke="#059669"
+                      stroke={chartColors.collections}
                       strokeWidth={2.5}
                       dot={false}
                       activeDot={{ r: 5 }}

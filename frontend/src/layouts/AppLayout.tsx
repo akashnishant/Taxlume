@@ -152,7 +152,7 @@ export default function AppLayout() {
                 className={({ isActive }) =>
                   `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
                     isActive
-                      ? "bg-slate-900 text-white"
+                      ? "relative overflow-hidden bg-slate-900 text-white before:absolute before:inset-y-2 before:left-0 before:w-1 before:rounded-r-full before:bg-lime-300"
                       : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                   }`
                 }

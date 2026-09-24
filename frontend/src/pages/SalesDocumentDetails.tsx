@@ -675,7 +675,7 @@ export default function SalesDocumentDetails() {
                 type="button"
                 onClick={requestIssue}
                 disabled={isIssuing || isCancelling || isGeneratingPdf}
-                className="cursor-pointer rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="cursor-pointer rounded-md bg-lime-300 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-lime-200 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isIssuing ? (
                   <ButtonLoadingContent message="Issuing document..." />

@@ -646,7 +646,7 @@ export default function DocumentEntryForm({ config }: DocumentEntryFormProps) {
             <button
               type="button"
               onClick={handleAddItem}
-              className="inline-flex cursor-pointer items-center rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+              className="inline-flex cursor-pointer items-center rounded-md bg-lime-300 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-lime-200"
             >
               Add Item
             </button>
@@ -978,7 +978,7 @@ export default function DocumentEntryForm({ config }: DocumentEntryFormProps) {
             type="button"
             onClick={() => void handleSaveDraft()}
             disabled={isSaving}
-            className="inline-flex cursor-pointer items-center justify-center rounded-md bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex cursor-pointer items-center justify-center rounded-md bg-lime-300 px-5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-lime-200 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSaving ? (
               <ButtonLoadingContent message="Saving draft..." />

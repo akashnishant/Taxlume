@@ -939,7 +939,7 @@ export default function SalesDocumentEdit() {
             <button
               type="button"
               onClick={addItem}
-              className="cursor-pointer rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
+              className="cursor-pointer rounded-md bg-lime-300 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-lime-200"
             >
               Add Item
             </button>
@@ -1323,7 +1323,7 @@ export default function SalesDocumentEdit() {
             type="button"
             onClick={handleSave}
             disabled={isSaving}
-            className="cursor-pointer rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="cursor-pointer rounded-md bg-lime-300 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-lime-200 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isSaving ? (
               <ButtonLoadingContent message="Saving changes..." />

@@ -156,7 +156,7 @@ export default function NewSale() {
                   <div
                     className={`rounded-md p-3 ${
                       isSelected
-                        ? "bg-slate-900 text-white"
+                        ? "bg-lime-300 text-slate-950"
                         : "bg-slate-100 text-slate-600"
                     }`}
                   >
@@ -182,7 +182,7 @@ export default function NewSale() {
           <button
             type="button"
             onClick={() => navigate(`/sales/new?type=${documentType}`)}
-            className="inline-flex cursor-pointer items-center justify-center rounded-md bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+            className="inline-flex cursor-pointer items-center justify-center rounded-md bg-lime-300 px-5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-lime-200"
           >
             Continue
           </button>

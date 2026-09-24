@@ -10,6 +10,7 @@ import {
 } from "recharts";
 
 import type { AnalyticsPaymentMethod } from "../services/analyticsApi";
+import { chartColors } from "../theme/brandColors";
 
 type Props = {
   methods: AnalyticsPaymentMethod[];
@@ -18,12 +19,12 @@ type Props = {
 };
 
 const METHOD_COLORS: Record<string, string> = {
-  UPI: "#6366f1",
-  BANK_TRANSFER: "#0891b2",
-  CASH: "#10b981",
-  CARD: "#f59e0b",
-  CHEQUE: "#8b5cf6",
-  OTHER: "#64748b",
+  UPI: chartColors.sales,
+  BANK_TRANSFER: chartColors.secondary,
+  CASH: chartColors.collections,
+  CARD: chartColors.warning,
+  CHEQUE: chartColors.tertiary,
+  OTHER: chartColors.muted,
 };
 
 function formatMoney(amountPaise: number, currencyCode: string): string {
@@ -113,7 +114,7 @@ export default function CollectionsByMethodChart({
                 barCategoryGap="28%"
               >
                 <CartesianGrid
-                  stroke="#e2e8f0"
+                  stroke={chartColors.grid}
                   strokeDasharray="3 3"
                   horizontal={false}
                 />
@@ -124,7 +125,7 @@ export default function CollectionsByMethodChart({
                   tickFormatter={(value: number) =>
                     formatCompactMoney(value, currencyCode)
                   }
-                  tick={{ fontSize: 11, fill: "#64748b" }}
+                  tick={{ fontSize: 11, fill: chartColors.axis }}
                   axisLine={false}
                   tickLine={false}
                 />
@@ -134,7 +135,7 @@ export default function CollectionsByMethodChart({
                   dataKey="label"
                   width={105}
                   interval={0}
-                  tick={{ fontSize: 11, fill: "#64748b" }}
+                  tick={{ fontSize: 11, fill: chartColors.axis }}
                   axisLine={false}
                   tickLine={false}
                 />

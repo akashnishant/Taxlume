@@ -174,7 +174,7 @@ export default function TaxSummaryReport({ startDate, endDate }: Props) {
         <button
           type="button"
           onClick={() => setRetryKey((current) => current + 1)}
-          className="mt-4 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700"
+          className="mt-4 rounded-lg bg-lime-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-lime-200"
         >
           Try again
         </button>
@@ -219,7 +219,7 @@ export default function TaxSummaryReport({ startDate, endDate }: Props) {
             <button
               type="button"
               onClick={exportTaxSummaryCsv}
-              className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
+              className="inline-flex items-center gap-2 rounded-lg bg-lime-300 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-lime-200"
             >
               <Download size={16} />
               Export CSV

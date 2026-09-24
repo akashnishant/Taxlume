@@ -8,6 +8,7 @@ import {
   YAxis,
 } from "recharts";
 import type { AnalyticsTopCustomer } from "../services/analyticsApi";
+import { chartColors } from "../theme/brandColors";
 
 type Props = {
   customers: AnalyticsTopCustomer[];
@@ -87,7 +88,7 @@ export default function TopCustomersChart({
                 barCategoryGap="30%"
               >
                 <CartesianGrid
-                  stroke="#e2e8f0"
+                  stroke={chartColors.grid}
                   strokeDasharray="3 3"
                   horizontal={false}
                 />
@@ -98,7 +99,7 @@ export default function TopCustomersChart({
                   tickFormatter={(value: number) =>
                     formatCompactMoney(value, currencyCode)
                   }
-                  tick={{ fontSize: 11, fill: "#64748b" }}
+                  tick={{ fontSize: 11, fill: chartColors.axis }}
                   axisLine={false}
                   tickLine={false}
                 />
@@ -111,7 +112,7 @@ export default function TopCustomersChart({
                   tickFormatter={(value: string) =>
                     value.length > 22 ? `${value.slice(0, 21)}…` : value
                   }
-                  tick={{ fontSize: 11, fill: "#64748b" }}
+                  tick={{ fontSize: 11, fill: chartColors.axis }}
                   axisLine={false}
                   tickLine={false}
                 />
@@ -128,7 +129,7 @@ export default function TopCustomersChart({
                 <Bar
                   dataKey="sales_amount"
                   name="Sales excluding tax"
-                  fill="#6366f1"
+                  fill={chartColors.sales}
                   radius={[0, 6, 6, 0]}
                   maxBarSize={26}
                 />

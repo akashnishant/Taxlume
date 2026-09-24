@@ -462,7 +462,7 @@ export default function Subscribe() {
                     type="button"
                     disabled={!selectedPrice || isStartingPayment}
                     onClick={handleContinueToPayment}
-                    className="w-full rounded-lg bg-slate-900 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="w-full rounded-lg bg-lime-300 py-3 text-sm font-semibold text-slate-950 transition hover:bg-lime-200 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {isStartingPayment ? (
                       <span className="inline-flex items-center justify-center gap-2">

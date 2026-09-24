@@ -181,7 +181,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full rounded-lg bg-slate-900 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 inline-flex items-center justify-center"
+              className="w-full rounded-lg bg-lime-300 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-lime-200 disabled:cursor-not-allowed disabled:opacity-60 inline-flex items-center justify-center"
             >
               {isLoading ? (
                 <ButtonLoadingContent message="Signing in..." />

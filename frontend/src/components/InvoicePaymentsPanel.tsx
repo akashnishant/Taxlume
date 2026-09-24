@@ -527,7 +527,7 @@ export default function InvoicePaymentsPanel({
         <button
           type="button"
           onClick={() => setRetryKey((value) => value + 1)}
-          className="mt-4 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+          className="mt-4 rounded-lg bg-lime-300 px-4 py-2 text-sm font-semibold text-slate-950"
         >
           Try again
         </button>
@@ -734,7 +734,7 @@ export default function InvoicePaymentsPanel({
           <button
             type="submit"
             disabled={isSaving || isReversing}
-            className="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-lg bg-lime-300 px-5 py-2.5 text-sm font-semibold text-slate-950 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isSaving ? (
               <ButtonLoadingContent

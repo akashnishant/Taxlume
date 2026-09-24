@@ -194,7 +194,7 @@ export default function Dashboard() {
           <button
             type="button"
             onClick={() => void loadDashboard()}
-            className="mt-4 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+            className="mt-4 rounded-lg bg-lime-300 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-lime-200"
           >
             Try again
           </button>
@@ -244,7 +244,7 @@ export default function Dashboard() {
           <button
             type="button"
             onClick={() => navigate("/sales/new")}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-lime-300 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-lime-200"
           >
             <FileText size={18} />
             Create Sale

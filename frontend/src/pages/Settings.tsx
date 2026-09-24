@@ -716,7 +716,7 @@ export default function Settings() {
             type="button"
             onClick={handleSave}
             disabled={isSaving}
-            className="cursor-pointer rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50 inline-flex items-center justify-center"
+            className="cursor-pointer rounded-md bg-lime-300 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-lime-200 disabled:cursor-not-allowed disabled:opacity-50 inline-flex items-center justify-center"
           >
             {isSaving ? (
               <ButtonLoadingContent message="Saving company details..." />
@@ -1025,7 +1025,7 @@ export default function Settings() {
               type="button"
               onClick={handleSavePaymentDetails}
               disabled={isSavingPaymentDetails}
-              className="cursor-pointer rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50 inline-flex items-center justify-center"
+              className="cursor-pointer rounded-md bg-lime-300 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-lime-200 disabled:cursor-not-allowed disabled:opacity-50 inline-flex items-center justify-center"
             >
               {isSavingPaymentDetails ? (
                 <ButtonLoadingContent message="Saving payment details..." />

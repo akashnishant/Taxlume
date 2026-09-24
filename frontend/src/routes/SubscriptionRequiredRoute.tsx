@@ -61,7 +61,7 @@ export default function SubscriptionRequiredRoute() {
           <button
             type="button"
             onClick={() => setRetryKey((value) => value + 1)}
-            className="mt-5 rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+            className="mt-5 rounded-lg bg-lime-300 px-5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-lime-200"
           >
             Try again
           </button>

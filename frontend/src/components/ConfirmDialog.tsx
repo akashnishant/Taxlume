@@ -65,7 +65,11 @@ export default function ConfirmDialog({
     ? "bg-red-600 hover:bg-red-700"
     : isWarning
       ? "bg-amber-600 hover:bg-amber-700"
-      : "bg-slate-900 hover:bg-slate-800";
+      : "bg-lime-300 hover:bg-lime-200";
+
+  const confirmButtonTextColor = isDanger || isWarning
+    ? "text-white"
+    : "text-slate-950";
 
   const Icon = isDanger || isWarning ? AlertTriangle : CircleHelp;
 
@@ -131,7 +135,7 @@ export default function ConfirmDialog({
             type="button"
             disabled={isProcessing}
             onClick={() => void onConfirm()}
-            className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-60 ${confirmButtonColor}`}
+            className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${confirmButtonTextColor} ${confirmButtonColor}`}
           >
             {isProcessing && (
               <LoaderCircle

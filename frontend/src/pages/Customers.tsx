@@ -357,7 +357,7 @@ export default function Customers() {
             setFormError("");
             setIsAddOpen(true);
           }}
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+          className="inline-flex items-center justify-center gap-2 rounded-lg bg-lime-300 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-lime-200"
         >
           <Plus size={18} />
           Add Customer
@@ -958,7 +958,7 @@ export default function Customers() {
                 type="button"
                 onClick={handleSaveCustomer}
                 disabled={isSaving}
-                className="rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-lg bg-lime-300 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-lime-200 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isSaving ? (
                   <ButtonLoadingContent

@@ -9,6 +9,7 @@ import {
   YAxis,
 } from "recharts";
 import type { AnalyticsAgingBucket } from "../services/analyticsApi";
+import { chartColors } from "../theme/brandColors";
 
 type Props = {
   aging: AnalyticsAgingBucket[];
@@ -17,12 +18,12 @@ type Props = {
 };
 
 const BUCKET_COLORS: Record<AnalyticsAgingBucket["bucket"], string> = {
-  not_overdue: "#10b981",
-  overdue_1_30: "#f59e0b",
-  overdue_31_60: "#f97316",
-  overdue_61_90: "#ef4444",
-  overdue_91_plus: "#be123c",
-  no_due_date: "#64748b",
+  not_overdue: chartColors.collections,
+  overdue_1_30: chartColors.warning,
+  overdue_31_60: chartColors.warningStrong,
+  overdue_61_90: chartColors.danger,
+  overdue_91_plus: chartColors.dangerStrong,
+  no_due_date: chartColors.muted,
 };
 
 function formatMoney(amountPaise: number, currencyCode: string): string {
@@ -126,7 +127,7 @@ export default function ReceivablesAgingChart({
                 barCategoryGap="28%"
               >
                 <CartesianGrid
-                  stroke="#e2e8f0"
+                  stroke={chartColors.grid}
                   strokeDasharray="3 3"
                   horizontal={false}
                 />
@@ -136,7 +137,7 @@ export default function ReceivablesAgingChart({
                   tickFormatter={(value: number) =>
                     formatCompactMoney(value, currencyCode)
                   }
-                  tick={{ fontSize: 11, fill: "#64748b" }}
+                  tick={{ fontSize: 11, fill: chartColors.axis }}
                   axisLine={false}
                   tickLine={false}
                 />
@@ -146,7 +147,7 @@ export default function ReceivablesAgingChart({
                   dataKey="label"
                   width={142}
                   interval={0}
-                  tick={{ fontSize: 11, fill: "#64748b" }}
+                  tick={{ fontSize: 11, fill: chartColors.axis }}
                   axisLine={false}
                   tickLine={false}
                 />

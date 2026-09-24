@@ -1,5 +1,6 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import type { AnalyticsCollectionStatus } from "../services/analyticsApi";
+import { chartColors } from "../theme/brandColors";
 
 type Props = {
   statuses: AnalyticsCollectionStatus[];
@@ -8,9 +9,9 @@ type Props = {
 };
 
 const STATUS_COLORS: Record<AnalyticsCollectionStatus["bucket"], string> = {
-  paid: "#10b981",
-  partial: "#6366f1",
-  unpaid: "#f59e0b",
+  paid: chartColors.collections,
+  partial: chartColors.secondary,
+  unpaid: chartColors.warning,
 };
 
 function formatMoney(amountPaise: number, currencyCode: string): string {
@@ -76,7 +77,7 @@ export default function InvoiceCollectionStatusChart({
                   innerRadius={68}
                   outerRadius={94}
                   paddingAngle={2}
-                  stroke="#ffffff"
+                  stroke={chartColors.white}
                   strokeWidth={2}
                 >
                   {chartData.map((row) => (

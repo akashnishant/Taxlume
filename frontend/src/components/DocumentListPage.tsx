@@ -102,7 +102,7 @@ export default function DocumentListPage({
 
         <button
           type="button"
-          className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+          className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-md bg-lime-300 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-lime-200"
           onClick={() => navigate(newPath)}
         >
           <Plus size={18} />
@@ -226,7 +226,7 @@ export default function DocumentListPage({
                       {!hasActiveFilters && (
                         <button
                           type="button"
-                          className="mt-5 inline-flex cursor-pointer items-center gap-2 rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+                          className="mt-5 inline-flex cursor-pointer items-center gap-2 rounded-md bg-lime-300 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-lime-200"
                           onClick={() => navigate(newPath)}
                         >
                           <Plus size={18} />
