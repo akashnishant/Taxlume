@@ -51,6 +51,8 @@ import { InvoiceReceiptReverse } from "./endpoints/invoiceReceiptReverse";
 import { ReportOverview } from "./endpoints/reportOverview";
 import { ExpenseCategoryList } from "./endpoints/expenseCategoryList";
 import { ExpenseCategoryCreate } from "./endpoints/expenseCategoryCreate";
+import { ExpenseCategoryGet } from "./endpoints/expenseCategoryGet";
+import { ExpenseCategoryUpdate } from "./endpoints/expenseCategoryUpdate";
 
 import { authMiddleware } from "./middleware/auth";
 import { subscriptionMiddleware } from "./middleware/subscription";
@@ -206,6 +208,16 @@ openapi.get(
 openapi.post(
     "/api/expense-categories",
     ExpenseCategoryCreate,
+);
+
+openapi.get(
+    "/api/expense-categories/:id",
+    ExpenseCategoryGet,
+);
+
+openapi.put(
+    "/api/expense-categories/:id",
+    ExpenseCategoryUpdate,
 );
 
 app.use(
