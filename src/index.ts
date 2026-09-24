@@ -1,4 +1,4 @@
-import { fromHono } from "chanfana";
+﻿import { fromHono } from "chanfana";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { HealthCheck } from "./endpoints/health";
@@ -59,6 +59,10 @@ import { ExpenseGet } from "./endpoints/expenseGet";
 import { ExpenseList } from "./endpoints/expenseList";
 import { ExpenseUpdate } from "./endpoints/expenseUpdate";
 import { ExpenseDelete } from "./endpoints/expenseDelete";
+import { ExpenseAttachmentUpload } from "./endpoints/expenseAttachmentUpload";
+import { ExpenseAttachmentList } from "./endpoints/expenseAttachmentList";
+import { ExpenseAttachmentGet } from "./endpoints/expenseAttachmentGet";
+import { ExpenseAttachmentDelete } from "./endpoints/expenseAttachmentDelete";
 
 import { authMiddleware } from "./middleware/auth";
 import { subscriptionMiddleware } from "./middleware/subscription";
@@ -93,6 +97,11 @@ app.use(
     },
     allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization"],
+
+    exposeHeaders: [
+      "Content-Disposition",
+      "X-Content-Type-Options",
+    ],
   }),
 );
 
@@ -271,6 +280,26 @@ openapi.put(
 openapi.delete(
     "/api/expenses/:id",
     ExpenseDelete,
+);
+
+openapi.post(
+    "/api/expenses/:id/attachments",
+    ExpenseAttachmentUpload,
+);
+
+openapi.get(
+    "/api/expenses/:id/attachments",
+    ExpenseAttachmentList,
+);
+
+openapi.get(
+    "/api/expenses/:id/attachments/:attachmentId",
+    ExpenseAttachmentGet,
+);
+
+openapi.delete(
+    "/api/expenses/:id/attachments/:attachmentId",
+    ExpenseAttachmentDelete,
 );
 
 app.use(
