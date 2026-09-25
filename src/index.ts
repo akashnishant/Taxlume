@@ -63,6 +63,13 @@ import { ExpenseAttachmentUpload } from "./endpoints/expenseAttachmentUpload";
 import { ExpenseAttachmentList } from "./endpoints/expenseAttachmentList";
 import { ExpenseAttachmentGet } from "./endpoints/expenseAttachmentGet";
 import { ExpenseAttachmentDelete } from "./endpoints/expenseAttachmentDelete";
+import { RecurringExpenseCreate } from "./endpoints/recurringExpenseCreate";
+import { RecurringExpenseGet } from "./endpoints/recurringExpenseGet";
+import { RecurringExpenseList } from "./endpoints/recurringExpenseList";
+import { RecurringExpenseStatus } from "./endpoints/recurringExpenseStatus";
+import { RecurringExpenseUpdate } from "./endpoints/recurringExpenseUpdate";
+import { generateDueRecurringExpenses } from "./utils/expenses/generateRecurringExpenses";
+import { RecurringExpenseDelete } from "./endpoints/recurringExpenseDelete";
 
 import { authMiddleware } from "./middleware/auth";
 import { subscriptionMiddleware } from "./middleware/subscription";
@@ -303,6 +310,48 @@ openapi.delete(
 );
 
 app.use(
+    "/api/recurring-expenses",
+    authMiddleware,
+    subscriptionMiddleware,
+);
+
+app.use(
+    "/api/recurring-expenses/*",
+    authMiddleware,
+    subscriptionMiddleware,
+);
+
+openapi.post(
+    "/api/recurring-expenses",
+    RecurringExpenseCreate,
+);
+
+openapi.get(
+    "/api/recurring-expenses",
+    RecurringExpenseList,
+);
+
+openapi.get(
+    "/api/recurring-expenses/:id",
+    RecurringExpenseGet,
+);
+
+openapi.patch(
+    "/api/recurring-expenses/:id/status",
+    RecurringExpenseStatus,
+);
+
+openapi.put(
+    "/api/recurring-expenses/:id",
+    RecurringExpenseUpdate,
+);
+
+openapi.delete(
+    "/api/recurring-expenses/:id",
+    RecurringExpenseDelete,
+);
+
+app.use(
     "/api/customers",
     authMiddleware,
     subscriptionMiddleware,
@@ -506,4 +555,31 @@ openapi.delete(
 // app.get('/test', (c) => c.text('Hono!'))
 
 // Export the Hono app
-export default app;
+export default {
+    fetch:
+        app.fetch,
+
+    async scheduled(
+        controller:
+            ScheduledController,
+
+        env:
+            Env,
+
+        _ctx:
+            ExecutionContext,
+    ) {
+        const result =
+            await generateDueRecurringExpenses(
+                env.DB,
+                new Date(
+                    controller.scheduledTime,
+                ),
+            );
+
+        console.log(
+            "Recurring expense generation completed",
+            result,
+        );
+    },
+} satisfies ExportedHandler<Env>;
