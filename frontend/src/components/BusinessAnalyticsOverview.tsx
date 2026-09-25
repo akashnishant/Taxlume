@@ -20,10 +20,12 @@ import CollectionsByMethodChart from "./CollectionsByMethodChart";
 import LoadingState from "./LoadingState";
 import { chartColors } from "../theme/brandColors";
 
-type DateRange = {
+export type AnalyticsDateRange = {
   startDate: string;
   endDate: string;
 };
+
+type DateRange = AnalyticsDateRange;
 
 function localDateString(date: Date): string {
   return [
@@ -135,13 +137,27 @@ function MetricCard({
 
 export default function BusinessAnalyticsOverview({
   showTopCustomers = false,
+  appliedRange: dashboardAppliedRange,
+  onAppliedRangeChange,
 }: {
   showTopCustomers?: boolean;
+  appliedRange?: AnalyticsDateRange;
+  onAppliedRangeChange?: (range: AnalyticsDateRange) => void;
 }) {
   const [draftRange, setDraftRange] = useState<DateRange>(currentMonthRange);
 
-  const [appliedRange, setAppliedRange] =
+  const [internalAppliedRange, setInternalAppliedRange] =
     useState<DateRange>(currentMonthRange);
+
+  const appliedRange = dashboardAppliedRange ?? internalAppliedRange;
+
+  function updateAppliedRange(nextRange: DateRange) {
+    if (dashboardAppliedRange && onAppliedRangeChange) {
+      onAppliedRangeChange(nextRange);
+    } else {
+      setInternalAppliedRange(nextRange);
+    }
+  }
 
   const [data, setData] = useState<AnalyticsOverview | null>(null);
 
@@ -210,7 +226,7 @@ export default function BusinessAnalyticsOverview({
     }
 
     setFilterError("");
-    setAppliedRange({ ...draftRange });
+    updateAppliedRange({ ...draftRange });
   }
 
   function selectPreset(preset: "month" | "year") {
@@ -218,7 +234,7 @@ export default function BusinessAnalyticsOverview({
       preset === "month" ? currentMonthRange() : lastTwelveMonthsRange();
 
     setDraftRange(range);
-    setAppliedRange(range);
+    updateAppliedRange(range);
     setFilterError("");
   }
 

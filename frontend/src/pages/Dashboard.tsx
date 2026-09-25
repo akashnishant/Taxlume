@@ -11,7 +11,10 @@ import {
   type DashboardData,
   type DashboardRecentDocument,
 } from "../services/dashboardApi";
-import BusinessAnalyticsOverview from "../components/BusinessAnalyticsOverview";
+import BusinessAnalyticsOverview, {
+  type AnalyticsDateRange,
+} from "../components/BusinessAnalyticsOverview";
+import DashboardExpensesOverview from "../components/DashboardExpensesOverview";
 import LoadingState from "../components/LoadingState";
 
 function formatMoney(amountPaise: number, currencyCode: string): string {
@@ -142,8 +145,33 @@ function RecentDocuments({
   );
 }
 
+function initialDashboardRange(): AnalyticsDateRange {
+  const today = new Date();
+  const monthStart = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    1,
+  );
+
+  function localDateString(date: Date): string {
+    return [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, "0"),
+      String(date.getDate()).padStart(2, "0"),
+    ].join("-");
+  }
+
+  return {
+    startDate: localDateString(monthStart),
+    endDate: localDateString(today),
+  };
+}
+
 export default function Dashboard() {
   const navigate = useNavigate();
+
+  const [dashboardRange, setDashboardRange] =
+    useState<AnalyticsDateRange>(initialDashboardRange);
 
   const [data, setData] = useState<DashboardData | null>(null);
 
@@ -252,7 +280,18 @@ export default function Dashboard() {
         </div>
 
         <div className="mb-8">
-          <BusinessAnalyticsOverview />
+          <BusinessAnalyticsOverview
+            appliedRange={dashboardRange}
+            onAppliedRangeChange={setDashboardRange}
+          />
+        </div>
+
+        <div className="mb-8">
+          <DashboardExpensesOverview
+            currencyCode={summary.currency_code}
+            startDate={dashboardRange.startDate}
+            endDate={dashboardRange.endDate}
+          />
         </div>
 
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
