@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import LoadingState from "./LoadingState";
+import ExpenseReceipts from "./ExpenseReceipts";
 import {
   getExpense,
   type ExpenseDetails,
@@ -240,6 +241,8 @@ export default function ExpenseDetailsModal({
                   </>
                 )}
               </dl>
+
+              <ExpenseReceipts expenseId={expense.id} />
             </div>
           ) : (
             <p className="text-sm text-slate-600">
