@@ -26,6 +26,7 @@ import Purchases from "./pages/Purchases";
 import RecurringExpenses from "./pages/RecurringExpenses";
 import AllExpenses from "./pages/AllExpenses";
 import ExpenseCategories from "./pages/ExpenseCategories";
+import ExpenseReports from "./pages/ExpenseReports";
 import NewPurchase from "./pages/NewPurchase";
 import Subscribe from "./pages/Subscribe";
 import SubscriptionRequiredRoute from "./routes/SubscriptionRequiredRoute";
@@ -125,6 +126,10 @@ function App() {
               <Route
                 path="/expenses/categories"
                 element={<ExpenseCategories />}
+              />
+              <Route
+                path="/expenses/reports"
+                element={<ExpenseReports />}
               />
               <Route
                 path="/expenses/recurring"

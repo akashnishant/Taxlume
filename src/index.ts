@@ -49,6 +49,7 @@ import { InvoiceReceiptList } from "./endpoints/invoiceReceiptList";
 import { InvoiceReceiptCreate } from "./endpoints/invoiceReceiptCreate";
 import { InvoiceReceiptReverse } from "./endpoints/invoiceReceiptReverse";
 import { ReportOverview } from "./endpoints/reportOverview";
+import { ReportExpenses } from "./endpoints/reportExpenses";
 import { ExpenseCategoryList } from "./endpoints/expenseCategoryList";
 import { ExpenseCategoryCreate } from "./endpoints/expenseCategoryCreate";
 import { ExpenseCategoryGet } from "./endpoints/expenseCategoryGet";
@@ -192,6 +193,11 @@ app.use(
 openapi.get(
   "/api/reports/overview",
   ReportOverview,
+);
+
+openapi.get(
+  "/api/reports/expenses",
+  ReportExpenses,
 );
 
 openapi.get(

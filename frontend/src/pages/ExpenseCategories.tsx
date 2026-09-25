@@ -195,6 +195,12 @@ export default function ExpenseCategories() {
         >
           Categories
         </span>
+        <Link
+          to="/expenses/reports"
+          className="px-4 py-3 text-sm font-medium text-slate-600 hover:text-slate-900"
+        >
+          Reports
+        </Link>
       </nav>
 
       <div className="flex justify-end">

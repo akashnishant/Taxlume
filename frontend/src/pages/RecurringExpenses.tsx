@@ -251,6 +251,12 @@ export default function RecurringExpenses() {
         >
           Categories
         </Link>
+        <Link
+          to="/expenses/reports"
+          className="px-4 py-3 text-sm font-medium text-slate-600 hover:text-slate-900"
+        >
+          Reports
+        </Link>
       </div>
 
       <div className="flex justify-end">
