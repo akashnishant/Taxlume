@@ -572,7 +572,7 @@ export default function ExpenseCreateModal({
               <button
                 type="submit"
                 disabled={saving || selectableCategories.length === 0}
-                className="rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-lg bg-lime-300 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-lime-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {saving ? "Saving..." : editingExpenseId ? "Save changes" : "Record expense"}
               </button>

@@ -266,7 +266,7 @@ export default function RecurringExpenses() {
             setEditingRuleId(null);
             setShowCreateForm(true);
           }}
-          className="rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800"
+          className="rounded-lg bg-lime-300 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-lime-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-500 focus-visible:ring-offset-2"
         >
           New recurring expense
         </button>
@@ -347,7 +347,7 @@ export default function RecurringExpenses() {
           <div className="flex items-end gap-2">
             <button
               type="submit"
-              className="rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800"
+              className="rounded-lg bg-lime-300 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-lime-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-500 focus-visible:ring-offset-2"
             >
               Search
             </button>
