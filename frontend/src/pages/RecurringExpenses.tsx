@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { Link } from "react-router-dom";
 import LoadingState from "../components/LoadingState";
 import { useNotification } from "../hooks/useNotifications";
 import RecurringExpenseCreateModal from "../components/RecurringExpenseCreateModal";
@@ -224,34 +225,40 @@ export default function RecurringExpenses() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">
-      <header className="space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
-          Expenses
+      <header>
+        <h1 className="text-2xl font-bold text-slate-900">Expenses</h1>
+        <p className="mt-1 text-sm text-slate-600">
+          View business expenses recorded manually or generated from recurring rules.
         </p>
-
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-          Recurring Expenses
-        </h1>
-
-        <p className="max-w-3xl text-sm text-slate-600">
-          View scheduled business expenses, their frequency, and their
-          next run dates. Purchases are managed separately.
-        </p>
-        <div className="flex flex-wrap items-center gap-3 pt-2">
-          <button
-            type="button"
-            onClick={() => {
-              setEditingRuleId(null);
-              setShowCreateForm(true);
-            }}
-            className="rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800"
-          >
-            New recurring expense
-          </button>
-
-
-        </div>
       </header>
+
+      <div className="flex flex-wrap gap-2 border-b border-slate-200">
+        <Link
+          to="/expenses"
+          className="px-4 py-3 text-sm font-medium text-slate-600 hover:text-slate-900"
+        >
+          All expenses
+        </Link>
+        <span
+          aria-current="page"
+          className="border-b-2 border-emerald-600 px-4 py-3 text-sm font-semibold text-emerald-700"
+        >
+          Recurring expenses
+        </span>
+      </div>
+
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => {
+            setEditingRuleId(null);
+            setShowCreateForm(true);
+          }}
+          className="rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800"
+        >
+          New recurring expense
+        </button>
+      </div>
 
       <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         <form

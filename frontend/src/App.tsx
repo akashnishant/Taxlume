@@ -24,6 +24,7 @@ import SalesDocumentDetails from "./pages/SalesDocumentDetails";
 import SalesDocumentEdit from "./pages/SalesDocumentEdit";
 import Purchases from "./pages/Purchases";
 import RecurringExpenses from "./pages/RecurringExpenses";
+import AllExpenses from "./pages/AllExpenses";
 import NewPurchase from "./pages/NewPurchase";
 import Subscribe from "./pages/Subscribe";
 import SubscriptionRequiredRoute from "./routes/SubscriptionRequiredRoute";
@@ -119,7 +120,11 @@ function App() {
               <Route path="/sales/new" element={<NewSale />} />
               <Route path="/sales/:id" element={<SalesDocumentDetails />} />
               <Route path="/sales/:id/edit" element={<SalesDocumentEdit />} />
-              <Route path="/expenses" element={<RecurringExpenses />} />
+              <Route path="/expenses" element={<AllExpenses />} />
+              <Route
+                path="/expenses/recurring"
+                element={<RecurringExpenses />}
+              />
               <Route path="/purchases" element={<Purchases />} />
               <Route path="/purchases/new" element={<NewPurchase />} />
               <Route path="/purchases/:id" element={<SalesDocumentDetails />} />

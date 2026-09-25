@@ -264,11 +264,6 @@ openapi.post(
     ExpenseCreate,
 );
 
-openapi.post(
-    "/api/expenses",
-    ExpenseCreate,
-);
-
 openapi.get(
     "/api/expenses",
     ExpenseList,
