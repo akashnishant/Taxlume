@@ -6,6 +6,7 @@ import {
   LogOut,
   Menu,
   Package,
+  Receipt,
   Settings,
   ShoppingCart,
   Truck,
@@ -34,6 +35,11 @@ const navigation = [
     label: "Purchases",
     path: "/purchases",
     icon: ShoppingCart,
+  },
+  {
+    label: "Expenses",
+    path: "/expenses",
+    icon: Receipt,
   },
   {
     label: "Customers",
