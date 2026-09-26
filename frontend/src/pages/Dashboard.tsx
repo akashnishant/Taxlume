@@ -86,7 +86,7 @@ function RecentDocuments({
 
   return (
     <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+      <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 sm:px-5 sm:py-4">
         <h3 className="font-semibold text-slate-900">{title}</h3>
 
         <button
@@ -111,7 +111,7 @@ function RecentDocuments({
               key={document.id}
               type="button"
               onClick={() => navigate(`${basePath}/${document.id}`)}
-              className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-slate-50"
+              className="block w-full px-4 py-3 text-left transition hover:bg-slate-50 sm:flex sm:items-center sm:justify-between sm:gap-4 sm:px-5 sm:py-4"
             >
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-slate-900">
@@ -124,13 +124,13 @@ function RecentDocuments({
                 </p>
               </div>
 
-              <div className="shrink-0 text-right">
-                <p className="text-sm font-semibold text-slate-900">
+              <div className="mt-2 flex items-center justify-between gap-3 border-t border-slate-100 pt-2 sm:mt-0 sm:block sm:shrink-0 sm:border-0 sm:pt-0 sm:text-right">
+                <p className="whitespace-nowrap text-sm font-semibold text-slate-900">
                   {formatMoney(document.total_paise, document.currency_code)}
                 </p>
 
                 <span
-                  className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusClass(
+                  className={`inline-flex shrink-0 rounded-full px-2 py-0.5 text-xs font-medium sm:mt-1 ${statusClass(
                     document.status,
                   )}`}
                 >
@@ -204,7 +204,7 @@ export default function Dashboard() {
 
   if (isLoading) {
     return (
-      <main className="mx-auto max-w-7xl px-6 py-8">
+      <main className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-8">
         <LoadingState
           message="Loading your dashboard..."
           description="Retrieving your latest sales, purchases, and business summary."
@@ -215,7 +215,7 @@ export default function Dashboard() {
 
   if (!data) {
     return (
-      <main className="mx-auto max-w-7xl px-6 py-8">
+      <main className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-8">
         <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center">
           <p className="text-sm text-red-700">{error}</p>
 
@@ -259,8 +259,8 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen">
-      <main className="mx-auto max-w-7xl px-6 py-8">
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <main className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-8">
+        <div className="mb-5 flex items-start justify-between gap-3 sm:mb-8 sm:items-center">
           <div>
             <h2 className="text-2xl font-bold text-slate-900">Dashboard</h2>
 
@@ -272,21 +272,22 @@ export default function Dashboard() {
           <button
             type="button"
             onClick={() => navigate("/sales/new")}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-lime-300 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-lime-200"
+            className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg bg-lime-300 px-3 py-2 text-xs font-semibold text-slate-950 transition hover:bg-lime-200 sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm"
           >
             <FileText size={18} />
             Create Sale
           </button>
         </div>
 
-        <div className="mb-8">
+        <div className="mb-5 sm:mb-8">
           <BusinessAnalyticsOverview
             appliedRange={dashboardRange}
             onAppliedRangeChange={setDashboardRange}
+            compactMobile
           />
         </div>
 
-        <div className="mb-8">
+        <div className="mb-5 sm:mb-8">
           <DashboardExpensesOverview
             currencyCode={summary.currency_code}
             startDate={dashboardRange.startDate}
@@ -294,31 +295,31 @@ export default function Dashboard() {
           />
         </div>
 
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 [&>div:last-child]:col-span-2 lg:[&>div:last-child]:col-span-1">
           {stats.map((stat) => {
             const Icon = stat.icon;
 
             return (
               <div
                 key={stat.title}
-                className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+                className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
               >
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start justify-between gap-2 sm:gap-4">
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-slate-500">
                       {stat.title}
                     </p>
 
-                    <p className="mt-2 truncate text-2xl font-bold text-slate-900">
+                    <p className="mt-1.5 whitespace-nowrap text-base font-bold text-slate-900 sm:mt-2 sm:text-2xl">
                       {stat.value}
                     </p>
 
-                    <p className="mt-1 text-xs text-slate-400">
+                    <p className="mt-1 hidden text-xs text-slate-400 sm:block">
                       {stat.description}
                     </p>
                   </div>
 
-                  <div className="shrink-0 rounded-lg bg-slate-100 p-2.5">
+                  <div className="shrink-0 rounded-lg bg-slate-100 p-2 sm:p-2.5">
                     <Icon size={20} className="text-slate-700" />
                   </div>
                 </div>
@@ -327,7 +328,7 @@ export default function Dashboard() {
           })}
         </div>
 
-        <div className="mt-8 grid gap-6 xl:grid-cols-2">
+        <div className="mt-5 grid gap-4 sm:mt-8 sm:gap-6 xl:grid-cols-2">
           <RecentDocuments
             title="Recent Sales"
             documents={recent_sales}

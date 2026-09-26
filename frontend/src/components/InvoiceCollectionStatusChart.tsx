@@ -6,6 +6,7 @@ type Props = {
   statuses: AnalyticsCollectionStatus[];
   currencyCode: string;
   asOfDate: string;
+  compactMobile?: boolean;
 };
 
 const STATUS_COLORS: Record<AnalyticsCollectionStatus["bucket"], string> = {
@@ -27,6 +28,7 @@ export default function InvoiceCollectionStatusChart({
   statuses,
   currencyCode,
   asOfDate,
+  compactMobile = false,
 }: Props) {
   const totalInvoices = statuses.reduce(
     (total, row) => total + row.invoice_count,
@@ -42,7 +44,9 @@ export default function InvoiceCollectionStatusChart({
 
   return (
     <section
-      className="min-w-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+      className={`min-w-0 rounded-2xl border border-slate-200 bg-white shadow-sm ${
+        compactMobile ? "p-4 sm:p-5" : "p-5"
+      }`}
       aria-labelledby="collection-status-heading"
     >
       <div>
@@ -53,7 +57,13 @@ export default function InvoiceCollectionStatusChart({
           Invoice collection status
         </h3>
 
-        <p className="mt-1 text-sm leading-6 text-slate-500">
+        <p
+          className={
+            compactMobile
+              ? "mt-1 text-xs leading-5 text-slate-500 sm:text-sm sm:leading-6"
+              : "mt-1 text-sm leading-6 text-slate-500"
+          }
+        >
           Current payment status of issued tax invoices. The chart represents
           invoice counts, not payment amounts.
         </p>
@@ -65,7 +75,13 @@ export default function InvoiceCollectionStatusChart({
         </div>
       ) : (
         <>
-          <div className="relative mt-4 h-64 min-w-0">
+          <div
+            className={
+              compactMobile
+                ? "relative mt-3 h-48 min-w-0 sm:mt-4 sm:h-64"
+                : "relative mt-4 h-64 min-w-0"
+            }
+          >
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -119,7 +135,11 @@ export default function InvoiceCollectionStatusChart({
               return (
                 <div
                   key={row.bucket}
-                  className="rounded-xl border border-slate-100 bg-slate-50 p-3"
+                  className={
+                    compactMobile
+                      ? "rounded-xl border border-slate-100 bg-slate-50 p-2.5 sm:p-3"
+                      : "rounded-xl border border-slate-100 bg-slate-50 p-3"
+                  }
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
@@ -145,7 +165,7 @@ export default function InvoiceCollectionStatusChart({
                   </div>
 
                   <div className="mt-2 flex flex-wrap justify-between gap-x-4 gap-y-1 text-xs text-slate-600">
-                    <span>
+                    <span className={compactMobile ? "hidden sm:inline" : undefined}>
                       Invoice value:{" "}
                       {formatMoney(row.invoice_total_paise, currencyCode)}
                     </span>
@@ -160,7 +180,13 @@ export default function InvoiceCollectionStatusChart({
             })}
           </div>
 
-          <div className="mt-4 rounded-xl border border-slate-100 px-4 py-3">
+          <div
+            className={
+              compactMobile
+                ? "mt-3 rounded-xl border border-slate-100 px-3 py-2.5 sm:mt-4 sm:px-4 sm:py-3"
+                : "mt-4 rounded-xl border border-slate-100 px-4 py-3"
+            }
+          >
             <p className="text-xs text-slate-500">
               Total outstanding across these invoices
             </p>
@@ -172,7 +198,13 @@ export default function InvoiceCollectionStatusChart({
         </>
       )}
 
-      <p className="mt-5 text-xs leading-5 text-slate-500">
+      <p
+        className={
+          compactMobile
+            ? "mt-4 text-[11px] leading-4 text-slate-500 sm:mt-5 sm:text-xs sm:leading-5"
+            : "mt-5 text-xs leading-5 text-slate-500"
+        }
+      >
         As of {asOfDate}. This is a current invoice-status breakdown,
         independent of the selected reporting period.
       </p>

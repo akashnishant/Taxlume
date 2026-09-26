@@ -15,6 +15,7 @@ type Props = {
   aging: AnalyticsAgingBucket[];
   currencyCode: string;
   asOfDate: string;
+  compactMobile?: boolean;
 };
 
 const BUCKET_COLORS: Record<AnalyticsAgingBucket["bucket"], string> = {
@@ -48,6 +49,7 @@ export default function ReceivablesAgingChart({
   aging,
   currencyCode,
   asOfDate,
+  compactMobile = false,
 }: Props) {
   const totalOutstandingPaise = aging.reduce(
     (total, row) => total + row.amount_paise,
@@ -66,7 +68,9 @@ export default function ReceivablesAgingChart({
 
   return (
     <section
-      className="min-w-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+      className={`min-w-0 rounded-2xl border border-slate-200 bg-white shadow-sm ${
+        compactMobile ? "p-4 sm:p-5" : "p-5"
+      }`}
       aria-labelledby="receivables-aging-heading"
     >
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -78,13 +82,25 @@ export default function ReceivablesAgingChart({
             Receivables aging
           </h3>
 
-          <p className="mt-1 text-sm leading-6 text-slate-500">
+          <p
+            className={
+              compactMobile
+                ? "mt-1 text-xs leading-5 text-slate-500 sm:text-sm sm:leading-6"
+                : "mt-1 text-sm leading-6 text-slate-500"
+            }
+          >
             Current unpaid invoice balances grouped by due date. These figures
             are not restricted to the selected sales period.
           </p>
         </div>
 
-        <div className="rounded-xl bg-slate-50 px-4 py-3 sm:text-right">
+        <div
+          className={
+            compactMobile
+              ? "rounded-xl bg-slate-50 px-3 py-2 sm:px-4 sm:py-3 sm:text-right"
+              : "rounded-xl bg-slate-50 px-4 py-3 sm:text-right"
+          }
+        >
           <p className="text-xs font-medium text-slate-500">
             Total outstanding
           </p>
@@ -107,7 +123,11 @@ export default function ReceivablesAgingChart({
       ) : (
         <>
           <div
-            className="mt-6 h-[310px] w-full min-w-0"
+            className={
+              compactMobile
+                ? "mt-4 h-[220px] w-full min-w-0 sm:mt-6 sm:h-[310px]"
+                : "mt-6 h-[310px] w-full min-w-0"
+            }
             role="img"
             aria-label={`Receivables aging chart showing ${formatMoney(
               totalOutstandingPaise,
@@ -145,7 +165,7 @@ export default function ReceivablesAgingChart({
                 <YAxis
                   type="category"
                   dataKey="label"
-                  width={142}
+                  width={compactMobile ? 108 : 142}
                   interval={0}
                   tick={{ fontSize: 11, fill: chartColors.axis }}
                   axisLine={false}
@@ -175,11 +195,21 @@ export default function ReceivablesAgingChart({
             </ResponsiveContainer>
           </div>
 
-          <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          <div
+            className={
+              compactMobile
+                ? "mt-3 grid grid-cols-2 gap-2 sm:mt-4"
+                : "mt-4 grid gap-2 sm:grid-cols-2"
+            }
+          >
             {aging.map((row) => (
               <div
                 key={row.bucket}
-                className="flex min-w-0 items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-3"
+                className={
+                  compactMobile
+                    ? "flex min-w-0 flex-col items-start gap-1 rounded-xl border border-slate-100 bg-slate-50 p-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-3 sm:py-3"
+                    : "flex min-w-0 items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-3"
+                }
               >
                 <div className="flex min-w-0 items-center gap-2">
                   <span
@@ -211,7 +241,13 @@ export default function ReceivablesAgingChart({
         </>
       )}
 
-      <p className="mt-5 text-xs leading-5 text-slate-500">
+      <p
+        className={
+          compactMobile
+            ? "mt-4 text-[11px] leading-4 text-slate-500 sm:mt-5 sm:text-xs sm:leading-5"
+            : "mt-5 text-xs leading-5 text-slate-500"
+        }
+      >
         As of {asOfDate}. Invoices without a due date are shown separately
         rather than treated as overdue.
       </p>

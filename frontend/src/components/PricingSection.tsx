@@ -149,7 +149,7 @@ export default function PricingSection() {
     <section
       id="pricing"
       aria-labelledby="pricing-heading"
-      className="scroll-mt-24 bg-slate-100 px-5 py-20 sm:px-8 lg:py-28"
+      className="scroll-mt-24 bg-[#e6eee5] px-5 py-20 sm:px-8 lg:py-28"
     >
       <div className="mx-auto max-w-7xl">
         <div className="mx-auto max-w-3xl text-center">
@@ -159,7 +159,7 @@ export default function PricingSection() {
 
           <h2
             id="pricing-heading"
-            className="mt-3 text-3xl font-extrabold tracking-tight text-slate-950 sm:text-4xl"
+            className="mt-4 text-4xl font-extrabold leading-[1.04] tracking-[-0.045em] text-slate-950 sm:text-5xl"
           >
             Find a billing option for your business.
           </h2>
@@ -235,7 +235,7 @@ export default function PricingSection() {
                 return (
                   <article
                     key={plan.id}
-                    className="flex min-w-0 flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/40 sm:p-8"
+                    className="flex min-w-0 flex-col overflow-hidden rounded-[1.5rem] border border-emerald-950/10 bg-white p-6 shadow-[0_28px_70px_-36px_rgba(15,23,42,0.35)] sm:p-8"
                   >
                     <div>
                       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -295,7 +295,7 @@ export default function PricingSection() {
               })}
             </div>
 
-            <div className="mt-10 rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
+            <div className="mt-10 rounded-[1.5rem] border border-emerald-950/10 bg-white/85 p-6 sm:p-8">
               <h3 className="text-lg font-bold text-slate-950">
                 Work with your business records in Techabanca Billing
               </h3>

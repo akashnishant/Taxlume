@@ -111,26 +111,54 @@ function MetricCard({
   value,
   detail,
   accent,
+  compactMobile = false,
 }: {
   label: string;
   value: string;
   detail: string;
   accent: string;
+  compactMobile?: boolean;
 }) {
   return (
-    <article className="relative min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <article
+      className={`relative min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ${
+        compactMobile ? "p-3 sm:p-5" : "p-5"
+      }`}
+    >
       <div
         className={`absolute inset-x-0 top-0 h-1 ${accent}`}
         aria-hidden="true"
       />
 
-      <p className="text-sm font-medium text-slate-500">{label}</p>
+      <p
+        className={
+          compactMobile
+            ? "text-xs font-medium text-slate-500 sm:text-sm"
+            : "text-sm font-medium text-slate-500"
+        }
+      >
+        {label}
+      </p>
 
-      <p className="mt-3 break-words text-2xl font-bold tracking-tight text-slate-900">
+      <p
+        className={
+          compactMobile
+            ? "mt-2 break-words text-lg font-bold tracking-tight text-slate-900 sm:mt-3 sm:text-2xl"
+            : "mt-3 break-words text-2xl font-bold tracking-tight text-slate-900"
+        }
+      >
         {value}
       </p>
 
-      <p className="mt-2 text-xs leading-5 text-slate-500">{detail}</p>
+      <p
+        className={
+          compactMobile
+            ? "mt-1 hidden text-xs leading-5 text-slate-500 sm:block"
+            : "mt-2 text-xs leading-5 text-slate-500"
+        }
+      >
+        {detail}
+      </p>
     </article>
   );
 }
@@ -139,10 +167,12 @@ export default function BusinessAnalyticsOverview({
   showTopCustomers = false,
   appliedRange: dashboardAppliedRange,
   onAppliedRangeChange,
+  compactMobile = false,
 }: {
   showTopCustomers?: boolean;
   appliedRange?: AnalyticsDateRange;
   onAppliedRangeChange?: (range: AnalyticsDateRange) => void;
+  compactMobile?: boolean;
 }) {
   const [draftRange, setDraftRange] = useState<DateRange>(currentMonthRange);
 
@@ -259,8 +289,15 @@ export default function BusinessAnalyticsOverview({
   );
 
   return (
-    <section className="space-y-5" aria-label="Business analytics">
-      <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <section
+      className={compactMobile ? "space-y-3 sm:space-y-5" : "space-y-5"}
+      aria-label="Business analytics"
+    >
+      <div
+        className={`flex flex-col rounded-2xl border border-slate-200 bg-white shadow-sm ${
+          compactMobile ? "gap-3 p-4 sm:gap-4 sm:p-5" : "gap-4 p-5"
+        }`}
+      >
         <div>
           <h3 className="text-lg font-bold text-slate-900">
             Business performance
@@ -290,8 +327,19 @@ export default function BusinessAnalyticsOverview({
           </button>
         </div>
 
-        <form onSubmit={applyRange} className="flex flex-wrap items-end gap-3">
-          <label className="flex flex-col gap-1 text-xs font-medium text-slate-600">
+        <form
+          onSubmit={applyRange}
+          className={
+            compactMobile
+              ? "grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-end sm:gap-3"
+              : "flex flex-wrap items-end gap-3"
+          }
+        >
+          <label className={
+              compactMobile
+                ? "min-w-0 flex flex-col gap-1 text-xs font-medium text-slate-600"
+                : "flex flex-col gap-1 text-xs font-medium text-slate-600"
+            }>
             Start date
             <input
               type="date"
@@ -302,11 +350,19 @@ export default function BusinessAnalyticsOverview({
                   startDate: event.target.value,
                 }))
               }
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900"
+              className={
+                compactMobile
+                  ? "w-full min-w-0 rounded-lg border border-slate-300 px-2 py-2 text-xs text-slate-900 sm:px-3 sm:text-sm"
+                  : "rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900"
+              }
             />
           </label>
 
-          <label className="flex flex-col gap-1 text-xs font-medium text-slate-600">
+          <label className={
+              compactMobile
+                ? "min-w-0 flex flex-col gap-1 text-xs font-medium text-slate-600"
+                : "flex flex-col gap-1 text-xs font-medium text-slate-600"
+            }>
             End date
             <input
               type="date"
@@ -317,14 +373,22 @@ export default function BusinessAnalyticsOverview({
                   endDate: event.target.value,
                 }))
               }
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900"
+              className={
+                compactMobile
+                  ? "w-full min-w-0 rounded-lg border border-slate-300 px-2 py-2 text-xs text-slate-900 sm:px-3 sm:text-sm"
+                  : "rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900"
+              }
             />
           </label>
 
           <button
             type="submit"
             disabled={isLoading}
-            className="rounded-lg bg-lime-300 px-5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-lime-200 disabled:cursor-not-allowed disabled:opacity-50"
+            className={
+              compactMobile
+                ? "col-span-2 w-full rounded-lg bg-lime-300 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-lime-200 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:px-5 sm:py-2.5"
+                : "rounded-lg bg-lime-300 px-5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-lime-200 disabled:cursor-not-allowed disabled:opacity-50"
+            }
           >
             Apply
           </button>
@@ -367,7 +431,13 @@ export default function BusinessAnalyticsOverview({
         </div>
       ) : (
         <>
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div
+            className={
+              compactMobile
+                ? "grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4"
+                : "grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+            }
+          >
             <MetricCard
               label="Sales excluding tax"
               value={formatMoney(
@@ -376,6 +446,7 @@ export default function BusinessAnalyticsOverview({
               )}
               detail={`${data.period_metrics.invoice_count} issued tax invoices in the selected period`}
               accent="bg-indigo-500"
+              compactMobile={compactMobile}
             />
 
             <MetricCard
@@ -386,6 +457,7 @@ export default function BusinessAnalyticsOverview({
               )}
               detail="Currently valid receipts dated in the selected period"
               accent="bg-emerald-500"
+              compactMobile={compactMobile}
             />
 
             <MetricCard
@@ -396,6 +468,7 @@ export default function BusinessAnalyticsOverview({
               )}
               detail={`Unpaid balance across all issued invoices, as of ${data.current_balances.as_of_date}`}
               accent="bg-amber-500"
+              compactMobile={compactMobile}
             />
 
             <MetricCard
@@ -406,11 +479,16 @@ export default function BusinessAnalyticsOverview({
               )}
               detail="Unpaid balances past their recorded due dates"
               accent="bg-rose-500"
+              compactMobile={compactMobile}
             />
           </div>
 
-          <section className="min-w-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="mb-6">
+          <section
+            className={`min-w-0 rounded-2xl border border-slate-200 bg-white shadow-sm ${
+              compactMobile ? "p-4 sm:p-5" : "p-5"
+            }`}
+          >
+            <div className={compactMobile ? "mb-4 sm:mb-6" : "mb-6"}>
               <h3 className="text-lg font-bold text-slate-900">
                 {useDailyTrend
                   ? "Daily sales and collections"
@@ -429,7 +507,13 @@ export default function BusinessAnalyticsOverview({
                 period.
               </div>
             ) : (
-              <div className="h-80 w-full min-w-0">
+              <div
+                className={
+                  compactMobile
+                    ? "h-56 w-full min-w-0 sm:h-80"
+                    : "h-80 w-full min-w-0"
+                }
+              >
                 <ResponsiveContainer width="100%" height="100%">
                   <ComposedChart
                     data={chartData}
@@ -541,7 +625,13 @@ export default function BusinessAnalyticsOverview({
               </div>
             )}
 
-            <p className="mt-10 text-xs leading-5 text-slate-500">
+            <p
+              className={
+                compactMobile
+                  ? "mt-5 hidden text-xs leading-5 text-slate-500 sm:block"
+                  : "mt-10 text-xs leading-5 text-slate-500"
+              }
+            >
               Historical collections may exclude payments entered before
               receipt tracking was introduced. Outstanding and overdue figures are
               current balances, not balances from the selected reporting period.
@@ -566,17 +656,25 @@ export default function BusinessAnalyticsOverview({
             </div>
           )}
 
-          <div className="grid items-start gap-5 xl:grid-cols-2">
+          <div
+            className={
+              compactMobile
+                ? "grid items-start gap-3 sm:gap-5 xl:grid-cols-2"
+                : "grid items-start gap-5 xl:grid-cols-2"
+            }
+          >
             <ReceivablesAgingChart
               aging={data.receivables_aging}
               currencyCode={currencyCode}
               asOfDate={data.current_balances.as_of_date}
+              compactMobile={compactMobile}
             />
 
             <InvoiceCollectionStatusChart
               statuses={data.collection_status}
               currencyCode={currencyCode}
               asOfDate={data.current_balances.as_of_date}
+              compactMobile={compactMobile}
             />
           </div>
         </>

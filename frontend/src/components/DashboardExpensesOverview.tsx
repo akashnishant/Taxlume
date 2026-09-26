@@ -72,17 +72,17 @@ function MetricCard({
     <article
       className={
         accent
-          ? "rounded-xl border border-lime-300 bg-lime-50 p-5"
-          : "rounded-xl border border-slate-200 bg-white p-5"
+          ? "rounded-xl border border-lime-300 bg-lime-50 p-3 sm:p-5"
+          : "rounded-xl border border-slate-200 bg-white p-3 sm:p-5"
       }
     >
-      <p className="text-sm font-medium text-slate-600">{label}</p>
+      <p className="text-xs font-medium text-slate-600 sm:text-sm">{label}</p>
 
-      <p className="mt-2 break-words text-2xl font-bold text-slate-950">
+      <p className="mt-1.5 break-words text-lg font-bold text-slate-950 sm:mt-2 sm:text-2xl">
         {value}
       </p>
 
-      <p className="mt-2 text-xs leading-5 text-slate-600">
+      <p className="mt-1 hidden text-xs leading-5 text-slate-600 sm:mt-2 sm:block">
         {description}
       </p>
     </article>
@@ -156,7 +156,7 @@ export default function DashboardExpensesOverview({
     : 0;
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+    <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
@@ -173,7 +173,7 @@ export default function DashboardExpensesOverview({
 
         <Link
           to="/expenses/reports"
-          className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-lime-400 hover:bg-lime-50"
+          className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-lime-400 hover:bg-lime-50 sm:px-3 sm:py-2 sm:text-sm"
         >
           View expense reports
           <ArrowUpRight size={16} />
@@ -206,7 +206,7 @@ export default function DashboardExpensesOverview({
             Selected period: {formatDate(startDate)} – {formatDate(endDate)}
           </p>
 
-          <div className="mt-4 grid gap-4 md:grid-cols-3">
+          <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-3 [&>article:last-child]:col-span-2 md:[&>article:last-child]:col-span-1">
             <MetricCard
               label="Recorded expenses"
               value={formatMoney(data.recordedPaise, currencyCode)}
@@ -231,7 +231,7 @@ export default function DashboardExpensesOverview({
             />
           </div>
 
-          <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-slate-600">
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] leading-4 text-slate-600 sm:mt-4 sm:text-xs sm:leading-5">
             <CalendarClock size={15} />
             <span>
               Scheduled amounts include future occurrences only,
