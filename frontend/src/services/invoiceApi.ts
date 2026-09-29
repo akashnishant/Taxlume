@@ -52,6 +52,7 @@ export type CreateDocumentRequest = {
     payment_terms_code?: PaymentTermsCode;
     payment_terms_custom?: string;
     customer_po_number?: string;
+    e_way_bill_number?: string;
 
     ship_to_same_as_bill_to?: boolean;
     ship_to_name?: string;
@@ -226,6 +227,7 @@ export type InvoiceDetails = {
     };
 
     customer_po_number: string | null;
+    e_way_bill_number: string | null;
 
     ship_to: {
         same_as_bill_to: boolean | null;
@@ -308,6 +310,7 @@ export type UpdateDocumentRequest = {
     payment_terms_code?: PaymentTermsCode | null;
     payment_terms_custom?: string | null;
     customer_po_number?: string | null;
+    e_way_bill_number?: string | null;
 
     ship_to_same_as_bill_to?: boolean | null;
     ship_to_name?: string | null;

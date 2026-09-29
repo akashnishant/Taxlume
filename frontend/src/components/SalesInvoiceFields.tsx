@@ -211,6 +211,18 @@ export default function SalesInvoiceFields({
           </label>
 
           <label>
+            <span className={labelClass}>E-Way Bill No.</span>
+            <input
+              className={inputClass}
+              value={value.eWayBillNumber}
+              maxLength={100}
+              inputMode="numeric"
+              placeholder="e.g. 123456789012"
+              onChange={(event) => set("eWayBillNumber", event.target.value)}
+            />
+          </label>
+
+          <label>
             <span className={labelClass}>Reference Number</span>
             <input
               className={inputClass}

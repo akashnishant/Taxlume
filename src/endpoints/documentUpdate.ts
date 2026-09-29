@@ -58,6 +58,7 @@ const DocumentUpdateRequest = z.object({
     payment_terms_code: PaymentTermsCode.nullable().optional(),
     payment_terms_custom: z.string().trim().max(500).nullable().optional(),
     customer_po_number: z.string().trim().max(100).nullable().optional(),
+    e_way_bill_number: z.string().trim().max(100).nullable().optional(),
 
     ship_to_same_as_bill_to: z.boolean().nullable().optional(),
     ship_to_name: z.string().trim().max(200).nullable().optional(),
@@ -160,6 +161,7 @@ export class DocumentUpdate extends OpenAPIRoute {
                     payment_terms_code,
                     payment_terms_custom,
                     customer_po_number,
+                    e_way_bill_number,
 
                     ship_to_same_as_bill_to,
                     ship_to_name,
@@ -217,6 +219,7 @@ export class DocumentUpdate extends OpenAPIRoute {
                 payment_terms_code: string | null;
                 payment_terms_custom: string | null;
                 customer_po_number: string | null;
+                e_way_bill_number: string | null;
 
                 ship_to_same_as_bill_to: number | null;
                 ship_to_name: string | null;
@@ -727,6 +730,11 @@ export class DocumentUpdate extends OpenAPIRoute {
                 ? body.customer_po_number
                 : document.customer_po_number;
 
+        const updatedEWayBillNumber =
+            body.e_way_bill_number !== undefined
+                ? body.e_way_bill_number
+                : document.e_way_bill_number;
+
         const updatedShipToSameAsBillTo =
             body.ship_to_same_as_bill_to !== undefined
                 ? body.ship_to_same_as_bill_to === null
@@ -940,6 +948,7 @@ export class DocumentUpdate extends OpenAPIRoute {
                         payment_terms_code = ?,
                         payment_terms_custom = ?,
                         customer_po_number = ?,
+                        e_way_bill_number = ?,
 
                         ship_to_same_as_bill_to = ?,
                         ship_to_name = ?,
@@ -972,6 +981,7 @@ export class DocumentUpdate extends OpenAPIRoute {
                         ? updatedPaymentTermsCustom?.trim() || null
                         : null,
                     updatedCustomerPoNumber?.trim() || null,
+                    updatedEWayBillNumber?.trim() || null,
 
                     updatedShipToSameAsBillTo,
                     updatedShipToName?.trim() || null,

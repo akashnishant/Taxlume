@@ -43,132 +43,160 @@ type InvoicePdfDocumentProps = {
 };
 
 const styles = StyleSheet.create({
+  // Compact commercial layout. The invoice keeps all configured information,
+  // but uses space more efficiently so typical 10-12 item invoices can stay
+  // on one A4 page. Longer addresses/notes still paginate normally.
   page: {
-    paddingTop: 20,
-    paddingBottom: 24,
-    paddingHorizontal: 24,
-    fontSize: 7.5,
+    paddingTop: 16,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
+    fontSize: 7.2,
     fontFamily: "Helvetica",
     color: "#111827",
-    lineHeight: 1.25,
+    lineHeight: 1.2,
   },
 
   watermark: {
     position: "absolute",
     top: "42%",
     left: "18%",
-    fontSize: 64,
+    fontSize: 58,
     fontWeight: 700,
     color: "#e5e7eb",
     transform: "rotate(-35deg)",
-    opacity: 0.6,
+    opacity: 0.48,
   },
 
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: 8,
+    marginBottom: 4,
   },
 
   companyBlock: {
-    width: "58%",
+    width: "60%",
   },
 
   documentHeadingBlock: {
-    width: "40%",
+    width: "38%",
     alignItems: "flex-end",
   },
 
   companyName: {
-    fontSize: 13,
+    fontSize: 12.5,
     fontWeight: 700,
-    marginBottom: 8,
+    marginBottom: 3,
   },
 
   companyLegalName: {
-    fontSize: 8,
-    marginBottom: 2,
+    fontSize: 7.2,
+    marginBottom: 1,
+  },
+
+  companyAddressStart: {
+    // Keep the identity block visually separate from the address/contact lines.
+    marginTop: 2.5,
   },
 
   smallText: {
-    fontSize: 7,
-    lineHeight: 1.25,
+    fontSize: 6.8,
+    lineHeight: 1.18,
   },
 
   muted: {
-    color: "#6b7280",
+    // Slightly stronger contrast keeps secondary information comfortable to read.
+    color: "#4b5563",
   },
 
   documentTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: 700,
     textAlign: "right",
-    lineHeight: 1.2,
+    lineHeight: 1.15,
   },
 
   documentNumber: {
-    marginTop: 5,
-    fontSize: 8,
+    marginTop: 3,
+    fontSize: 7.2,
     fontWeight: 700,
     textAlign: "right",
   },
 
   divider: {
-    borderBottomWidth: 1,
+    borderBottomWidth: 0.8,
     borderBottomColor: "#cbd5e1",
-    marginBottom: 7,
+    marginBottom: 5,
   },
 
-  // taxlume-stage2a6: sales PDF enhancements
   shipToBox: {
-    borderWidth: 1,
+    borderWidth: 0.8,
     borderColor: "#d1d5db",
-    padding: 7,
-    marginBottom: 8,
+    padding: 5,
+    marginBottom: 5,
+  },
+
+  shipSameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderTopWidth: 0.6,
+    borderTopColor: "#e5e7eb",
+    marginTop: 3,
+    paddingTop: 3,
+  },
+
+  shipSameLabel: {
+    fontSize: 6.2,
+    fontWeight: 700,
+    marginRight: 5,
+  },
+
+  shipSameValue: {
+    fontSize: 6.4,
+    color: "#4b5563",
   },
 
   chargeLabel: {
     width: "60%",
-    paddingRight: 5,
+    paddingRight: 4,
   },
 
   infoGrid: {
     flexDirection: "row",
-    borderWidth: 1,
+    borderWidth: 0.8,
     borderColor: "#d1d5db",
-    marginBottom: 8,
+    marginBottom: 5,
   },
 
   infoColumn: {
     width: "50%",
-    padding: 7,
+    padding: 5,
   },
 
   infoColumnRight: {
     width: "50%",
-    padding: 7,
-    borderLeftWidth: 1,
+    padding: 5,
+    borderLeftWidth: 0.8,
     borderLeftColor: "#d1d5db",
   },
 
   sectionTitle: {
-    fontSize: 8,
+    fontSize: 7.2,
     fontWeight: 700,
-    marginBottom: 4,
+    marginBottom: 2.5,
     textTransform: "uppercase",
   },
 
   partyName: {
-    fontSize: 8,
+    fontSize: 7.4,
     fontWeight: 700,
-    marginBottom: 2,
+    marginBottom: 1,
   },
 
   detailRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 2,
+    marginBottom: 1,
   },
 
   detailLabel: {
@@ -182,23 +210,35 @@ const styles = StyleSheet.create({
   },
 
   table: {
-    borderWidth: 1,
-    borderColor: "#d1d5db",
-    marginBottom: 8,
+    // Keep the column header visually separate from the bordered item body.
+    // Only the rows area receives an outer border; the header itself remains
+    // borderless and uses its background fill for hierarchy.
+    marginBottom: 5,
   },
 
   tableHeader: {
     flexDirection: "row",
-    backgroundColor: "#f3f4f6",
-    borderBottomWidth: 1,
-    borderBottomColor: "#d1d5db",
+    backgroundColor: "#eef2f7",
     fontWeight: 700,
+    fontSize: 6.8,
+    color: "#111827",
+  },
+
+  tableBody: {
+    borderWidth: 0.7,
+    borderColor: "#cbd5e1",
+    // Preserve approximately the same total Items-section footprint as the
+    // previous 250pt table: header (~13pt) + body (~237pt). The body can grow
+    // naturally for longer invoices, so no content is clipped.
+    minHeight: 237,
   },
 
   tableRow: {
     flexDirection: "row",
-    borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb",
+  },
+
+  tableRowAlt: {
+    backgroundColor: "#f7f8fa",
   },
 
   tableRowLast: {
@@ -206,26 +246,26 @@ const styles = StyleSheet.create({
   },
 
   cell: {
-    paddingVertical: 4,
-    paddingHorizontal: 3,
+    paddingVertical: 2.45,
+    paddingHorizontal: 2.4,
   },
 
   itemCell: {
-    width: "24%",
+    width: "25%",
   },
 
   qtyCell: {
-    width: "8%",
+    width: "7%",
     textAlign: "right",
   },
 
   rateCell: {
-    width: "14%",
+    width: "13%",
     textAlign: "right",
   },
 
   discountCell: {
-    width: "13%",
+    width: "12%",
     textAlign: "right",
   },
 
@@ -235,112 +275,122 @@ const styles = StyleSheet.create({
   },
 
   gstCell: {
-    width: "13%",
+    width: "12%",
     textAlign: "right",
   },
 
   totalCell: {
-    width: "14%",
+    width: "17%",
     textAlign: "right",
   },
 
   itemName: {
+    fontSize: 7.1,
     fontWeight: 700,
   },
 
   itemMeta: {
-    marginTop: 1,
-    fontSize: 6.2,
-    color: "#6b7280",
+    marginTop: 0.6,
+    fontSize: 6.05,
+    lineHeight: 1.15,
+    color: "#4b5563",
   },
 
   summaryGrid: {
     flexDirection: "row",
-    marginBottom: 8,
+    marginBottom: 5,
   },
 
   amountWordsBlock: {
-    width: "52%",
-    paddingRight: 10,
+    width: "50%",
+    paddingRight: 8,
   },
 
   totalsBlock: {
-    width: "48%",
-    borderWidth: 1,
+    width: "50%",
+    borderWidth: 0.8,
     borderColor: "#d1d5db",
-    padding: 6,
+    padding: 4.5,
   },
 
   totalRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 3,
+    marginBottom: 1.5,
   },
 
   totalDivider: {
-    borderTopWidth: 1,
+    borderTopWidth: 0.7,
     borderTopColor: "#d1d5db",
-    paddingTop: 4,
-    marginTop: 2,
+    paddingTop: 2.5,
+    marginTop: 1.2,
   },
 
   grandTotal: {
-    fontSize: 9,
+    fontSize: 8.2,
     fontWeight: 700,
   },
 
   notesTermsGrid: {
     flexDirection: "row",
-    marginBottom: 8,
+    marginBottom: 5,
   },
 
   notesColumn: {
     width: "50%",
-    paddingRight: 8,
+    paddingRight: 6,
   },
 
   termsColumn: {
     width: "50%",
-    paddingLeft: 8,
-    borderLeftWidth: 1,
+    paddingLeft: 6,
+    borderLeftWidth: 0.6,
     borderLeftColor: "#e5e7eb",
   },
 
   textBlock: {
-    fontSize: 6.8,
-    lineHeight: 1.3,
+    fontSize: 6.4,
+    lineHeight: 1.2,
     color: "#374151",
   },
 
   footerBox: {
     flexDirection: "row",
-    borderWidth: 1,
+    borderWidth: 0.8,
     borderColor: "#d1d5db",
-    minHeight: 78,
+    minHeight: 54,
     marginTop: "auto",
   },
 
   bankBlock: {
     width: "48%",
-    padding: 7,
+    padding: 5,
+  },
+
+  bankBlockNoQr: {
+    width: "58%",
   },
 
   qrBlock: {
-    width: "20%",
-    padding: 6,
+    width: "18%",
+    padding: 4,
     alignItems: "center",
     justifyContent: "center",
-    borderLeftWidth: 1,
+    borderLeftWidth: 0.8,
     borderLeftColor: "#d1d5db",
   },
 
   signatoryBlock: {
-    width: "32%",
-    padding: 7,
-    borderLeftWidth: 1,
+    width: "34%",
+    padding: 5,
+    borderLeftWidth: 0.8,
     borderLeftColor: "#d1d5db",
     alignItems: "flex-end",
     justifyContent: "space-between",
+  },
+
+  signatoryBlockNoQr: {
+    width: "42%",
   },
 
   footerBoxPurchaseOrder: {
@@ -349,50 +399,50 @@ const styles = StyleSheet.create({
   },
 
   signatoryBlockPurchaseOrder: {
-    width: "32%",
-    borderWidth: 1,
+    width: "34%",
+    borderWidth: 0.8,
     borderColor: "#d1d5db",
   },
 
   qrImage: {
-    width: 58,
-    height: 58,
+    width: 40,
+    height: 40,
     objectFit: "contain",
   },
 
   qrLabel: {
-    marginTop: 2,
-    fontSize: 6,
+    marginTop: 1,
+    fontSize: 5.5,
     color: "#6b7280",
     textAlign: "center",
   },
 
   signatureImage: {
-    width: 85,
-    height: 34,
+    width: 72,
+    height: 25,
     objectFit: "contain",
-    marginVertical: 3,
+    marginVertical: 2,
   },
 
   signatoryCompany: {
-    fontSize: 7,
+    fontSize: 6.4,
     fontWeight: 700,
     textAlign: "right",
   },
 
   signatoryLabel: {
-    fontSize: 7,
+    fontSize: 6.4,
     fontWeight: 700,
     textAlign: "right",
   },
 
   pageNumber: {
     position: "absolute",
-    bottom: 8,
-    left: 24,
-    right: 24,
+    bottom: 6,
+    left: 20,
+    right: 20,
     textAlign: "center",
-    fontSize: 6.5,
+    fontSize: 5.8,
     color: "#9ca3af",
   },
 });
@@ -423,6 +473,10 @@ function formatMoney(valuePaise: number, currencyCode: string): string {
   const currencyLabel = currencyCode === "INR" ? "Rs" : currencyCode;
 
   return `${currencyLabel} ${(valuePaise / 100).toFixed(2)}`;
+}
+
+function formatTableMoney(valuePaise: number): string {
+  return (valuePaise / 100).toFixed(2);
 }
 
 function formatDate(date: string | null): string {
@@ -609,6 +663,18 @@ export default function InvoicePdfDocument({
     paymentDetails.show_qr_on_invoice &&
     Boolean(paymentQrDataUrl);
 
+  const tableCurrencyLabel =
+    document.currency_code === "INR" ? "Rs" : document.currency_code;
+
+  const hasPaymentDetails = Boolean(
+    paymentDetails.bank_name ||
+      paymentDetails.account_holder_name ||
+      paymentDetails.account_number ||
+      paymentDetails.ifsc_code ||
+      paymentDetails.branch_name ||
+      paymentDetails.upi_id,
+  );
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -634,7 +700,7 @@ export default function InvoicePdfDocument({
               <Text style={styles.companyLegalName}>{company.legal_name}</Text>
             )}
 
-            <Text style={styles.smallText}>
+            <Text style={[styles.smallText, styles.companyAddressStart]}>
               {[company.address_line1, company.address_line2]
                 .filter(Boolean)
                 .join(", ")}
@@ -727,6 +793,13 @@ export default function InvoicePdfDocument({
                 .filter(Boolean)
                 .join("  |  ")}
             </Text>
+
+            {!isPurchaseOrder && shipToSameAsBillTo && (
+              <View style={styles.shipSameRow}>
+                <Text style={styles.shipSameLabel}>SHIP TO</Text>
+                <Text style={styles.shipSameValue}>Same as Bill To</Text>
+              </View>
+            )}
           </View>
 
           <View style={styles.infoColumnRight}>
@@ -772,6 +845,16 @@ export default function InvoicePdfDocument({
                     {document.customer_po_number || "-"}
                   </Text>
                 </View>
+
+                {document.e_way_bill_number && (
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>E-Way Bill No.</Text>
+
+                    <Text style={styles.detailValue}>
+                      {document.e_way_bill_number}
+                    </Text>
+                  </View>
+                )}
               </>
             )}
 
@@ -804,110 +887,49 @@ export default function InvoicePdfDocument({
           </View>
         </View>
 
-        {!isPurchaseOrder && (
+        {!isPurchaseOrder && !shipToSameAsBillTo && (
           <View style={styles.shipToBox}>
-            <Text style={styles.sectionTitle}>
-              Ship To
-              {shipToSameAsBillTo
-                ? " - Same as Bill To"
-                : ""}
+            <Text style={styles.sectionTitle}>Ship To</Text>
+
+            <Text style={styles.partyName}>
+              {document.ship_to.name || "-"}
             </Text>
 
-            {shipToSameAsBillTo ? (
-              <>
-                <Text style={styles.partyName}>
-                  {document.party?.display_name ||
-                    document.party?.legal_name ||
-                    "-"}
-                </Text>
-
-                {document.party?.legal_name &&
-                  document.party.legal_name !==
-                    document.party.display_name && (
-                    <Text style={styles.smallText}>
-                      {document.party.legal_name}
-                    </Text>
-                  )}
-
-                <Text style={styles.smallText}>
-                  {[
-                    partyAddress?.address_line1,
-                    partyAddress?.address_line2,
-                  ]
-                    .filter(Boolean)
-                    .join(", ") || "-"}
-                </Text>
-
-                <Text style={styles.smallText}>
-                  {[
-                    partyAddress?.city,
-                    partyAddress?.state,
-                    partyAddress?.pincode,
-                    partyAddress?.country,
-                  ]
-                    .filter(Boolean)
-                    .join(", ") || "-"}
-                </Text>
-
-                <Text style={styles.smallText}>
-                  GSTIN: {document.party?.gstin || "-"}
-                </Text>
-
-                <Text style={styles.smallText}>
-                  {[
-                    document.party?.phone,
-                    document.party?.email,
-                  ]
-                    .filter(Boolean)
-                    .join(" | ") || "-"}
-                </Text>
-              </>
-            ) : (
-              <>
-                <Text style={styles.partyName}>
-                  {document.ship_to.name || "-"}
-                </Text>
-
-                {document.ship_to.contact_person && (
-                  <Text style={styles.smallText}>
-                    Contact: {document.ship_to.contact_person}
-                  </Text>
-                )}
-
-                <Text style={styles.smallText}>
-                  {[
-                    document.ship_to.address_line1,
-                    document.ship_to.address_line2,
-                  ]
-                    .filter(Boolean)
-                    .join(", ") || "-"}
-                </Text>
-
-                <Text style={styles.smallText}>
-                  {[
-                    document.ship_to.city,
-                    document.ship_to.state,
-                    document.ship_to.pincode,
-                    document.ship_to.country,
-                  ]
-                    .filter(Boolean)
-                    .join(", ") || "-"}
-                </Text>
-
-                <Text style={styles.smallText}>
-                  GSTIN: {document.ship_to.gstin || "-"}
-                </Text>
-
-                <Text style={styles.smallText}>
-                  {[
-                    document.ship_to.phone,
-                    document.ship_to.email,
-                  ]
-                    .filter(Boolean)
-                    .join(" | ") || "-"}
-                </Text>
-              </>
+            {document.ship_to.contact_person && (
+              <Text style={styles.smallText}>
+                Contact: {document.ship_to.contact_person}
+              </Text>
             )}
+
+            <Text style={styles.smallText}>
+              {[
+                document.ship_to.address_line1,
+                document.ship_to.address_line2,
+              ]
+                .filter(Boolean)
+                .join(", ") || "-"}
+            </Text>
+
+            <Text style={styles.smallText}>
+              {[
+                document.ship_to.city,
+                document.ship_to.state,
+                document.ship_to.pincode,
+                document.ship_to.country,
+              ]
+                .filter(Boolean)
+                .join(", ") || "-"}
+            </Text>
+
+            <Text style={styles.smallText}>
+              GSTIN: {document.ship_to.gstin || "-"}
+            </Text>
+
+            <Text style={styles.smallText}>
+              {[document.ship_to.phone, document.ship_to.email]
+                .filter(Boolean)
+                .join(" | ") || "-"}
+            </Text>
           </View>
         )}
 
@@ -917,72 +939,82 @@ export default function InvoicePdfDocument({
 
             <Text style={[styles.cell, styles.qtyCell]}>Qty</Text>
 
-            <Text style={[styles.cell, styles.rateCell]}>Rate</Text>
+            <Text style={[styles.cell, styles.rateCell]}>
+              Rate ({tableCurrencyLabel})
+            </Text>
 
-            <Text style={[styles.cell, styles.discountCell]}>Disc.</Text>
+            <Text style={[styles.cell, styles.discountCell]}>
+              Disc. ({tableCurrencyLabel})
+            </Text>
 
-            <Text style={[styles.cell, styles.taxableCell]}>Taxable</Text>
+            <Text style={[styles.cell, styles.taxableCell]}>
+              Taxable ({tableCurrencyLabel})
+            </Text>
 
-            <Text style={[styles.cell, styles.gstCell]}>GST</Text>
+            <Text style={[styles.cell, styles.gstCell]}>
+              GST ({tableCurrencyLabel})
+            </Text>
 
-            <Text style={[styles.cell, styles.totalCell]}>Total</Text>
+            <Text style={[styles.cell, styles.totalCell]}>
+              Total ({tableCurrencyLabel})
+            </Text>
           </View>
 
-          {document.items.map((item, index) => {
-            const gstPaise =
-              item.cgst_paise + item.sgst_paise + item.igst_paise;
+          <View style={styles.tableBody}>
+            {document.items.map((item, index) => {
+              const gstPaise =
+                item.cgst_paise + item.sgst_paise + item.igst_paise;
 
-            return (
-              <View
-                key={item.id}
-                wrap={false}
-                style={
-                  index === document.items.length - 1
-                    ? styles.tableRowLast
-                    : styles.tableRow
-                }
-              >
-                <View style={[styles.cell, styles.itemCell]}>
-                  <Text style={styles.itemName}>{item.item_name}</Text>
+              return (
+                <View
+                  key={item.id}
+                  wrap={false}
+                  style={[
+                    index === document.items.length - 1
+                      ? styles.tableRowLast
+                      : styles.tableRow,
+                    ...(index % 2 === 1 ? [styles.tableRowAlt] : []),
+                  ]}
+                >
+                  <View style={[styles.cell, styles.itemCell]}>
+                    <Text style={styles.itemName}>{item.item_name}</Text>
 
-                  <Text style={styles.itemMeta}>
-                    {item.hsn_sac ? `HSN/SAC: ${item.hsn_sac}` : "HSN/SAC: -"}
-                    {" | "}
-                    {item.unit ?? "-"}
-                    {" | GST "}
-                    {(item.gst_rate_bps / 100).toFixed(2)}%
+                    <Text style={styles.itemMeta}>
+                      {item.hsn_sac ? `HSN/SAC: ${item.hsn_sac}` : "HSN/SAC: -"}
+                      {" | "}
+                      {item.unit ?? "-"}
+                      {" | GST "}
+                      {(item.gst_rate_bps / 100).toFixed(2)}%
+                    </Text>
+                  </View>
+
+                  <Text style={[styles.cell, styles.qtyCell]}>
+                    {(item.quantity_milli / 1000).toFixed(3)}
+                  </Text>
+
+                  <Text style={[styles.cell, styles.rateCell]}>
+                    {formatTableMoney(item.rate_paise)}
+                  </Text>
+
+                  <Text style={[styles.cell, styles.discountCell]}>
+                    {formatTableMoney(item.discount_paise)}
+                  </Text>
+
+                  <Text style={[styles.cell, styles.taxableCell]}>
+                    {formatTableMoney(item.taxable_amount_paise)}
+                  </Text>
+
+                  <Text style={[styles.cell, styles.gstCell]}>
+                    {formatTableMoney(gstPaise)}
+                  </Text>
+
+                  <Text style={[styles.cell, styles.totalCell]}>
+                    {formatTableMoney(item.total_paise)}
                   </Text>
                 </View>
-
-                <Text style={[styles.cell, styles.qtyCell]}>
-                  {(item.quantity_milli / 1000).toFixed(3)}
-                </Text>
-
-                <Text style={[styles.cell, styles.rateCell]}>
-                  {formatMoney(item.rate_paise, document.currency_code)}
-                </Text>
-
-                <Text style={[styles.cell, styles.discountCell]}>
-                  {formatMoney(item.discount_paise, document.currency_code)}
-                </Text>
-
-                <Text style={[styles.cell, styles.taxableCell]}>
-                  {formatMoney(
-                    item.taxable_amount_paise,
-                    document.currency_code,
-                  )}
-                </Text>
-
-                <Text style={[styles.cell, styles.gstCell]}>
-                  {formatMoney(gstPaise, document.currency_code)}
-                </Text>
-
-                <Text style={[styles.cell, styles.totalCell]}>
-                  {formatMoney(item.total_paise, document.currency_code)}
-                </Text>
-              </View>
-            );
-          })}
+              );
+            })}
+          </View>
         </View>
 
         <View style={styles.summaryGrid} wrap={false}>
@@ -1215,24 +1247,43 @@ export default function InvoicePdfDocument({
         >
           {!isPurchaseOrder && (
             <>
-              <View style={styles.bankBlock}>
+              <View
+                style={[
+                  styles.bankBlock,
+                  ...(!showPaymentQr ? [styles.bankBlockNoQr] : []),
+                ]}
+              >
                 <Text style={styles.sectionTitle}>Bank & Payment Details</Text>
 
-                <Text style={styles.smallText}>
-                  Bank: {paymentDetails.bank_name ?? "-"}
-                </Text>
+                {!hasPaymentDetails && (
+                  <Text style={[styles.smallText, styles.muted]}>
+                    Payment details not configured
+                  </Text>
+                )}
 
-                <Text style={styles.smallText}>
-                  A/C Holder: {paymentDetails.account_holder_name ?? "-"}
-                </Text>
+                {paymentDetails.bank_name && (
+                  <Text style={styles.smallText}>
+                    Bank: {paymentDetails.bank_name}
+                  </Text>
+                )}
 
-                <Text style={styles.smallText}>
-                  A/C No: {paymentDetails.account_number ?? "-"}
-                </Text>
+                {paymentDetails.account_holder_name && (
+                  <Text style={styles.smallText}>
+                    A/C Holder: {paymentDetails.account_holder_name}
+                  </Text>
+                )}
 
-                <Text style={styles.smallText}>
-                  IFSC: {paymentDetails.ifsc_code ?? "-"}
-                </Text>
+                {paymentDetails.account_number && (
+                  <Text style={styles.smallText}>
+                    A/C No: {paymentDetails.account_number}
+                  </Text>
+                )}
+
+                {paymentDetails.ifsc_code && (
+                  <Text style={styles.smallText}>
+                    IFSC: {paymentDetails.ifsc_code}
+                  </Text>
+                )}
 
                 {paymentDetails.branch_name && (
                   <Text style={styles.smallText}>
@@ -1257,7 +1308,14 @@ export default function InvoicePdfDocument({
             </>
           )}
 
-          <View style={styles.signatoryBlock}>
+          <View
+            style={[
+              styles.signatoryBlock,
+              ...(!isPurchaseOrder && !showPaymentQr
+                ? [styles.signatoryBlockNoQr]
+                : []),
+            ]}
+          >
             <Text style={styles.signatoryCompany}>
               For {company.trade_name || company.legal_name}
             </Text>

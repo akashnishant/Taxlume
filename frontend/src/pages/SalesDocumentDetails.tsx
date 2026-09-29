@@ -807,6 +807,16 @@ export default function SalesDocumentDetails() {
                     {document.customer_po_number ?? "-"}
                   </p>
                 </div>
+
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                    E-Way Bill No.
+                  </p>
+
+                  <p className="mt-1 break-words text-sm font-medium text-slate-900">
+                    {document.e_way_bill_number ?? "-"}
+                  </p>
+                </div>
               </>
             )}
           </div>

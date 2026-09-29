@@ -66,6 +66,7 @@ const DocumentCreateRequest = z.object({
     payment_terms_code: PaymentTermsCode.optional(),
     payment_terms_custom: z.string().trim().max(500).optional(),
     customer_po_number: z.string().trim().max(100).optional(),
+    e_way_bill_number: z.string().trim().max(100).optional(),
 
     ship_to_same_as_bill_to: z.boolean().optional(),
     ship_to_name: z.string().trim().max(200).optional(),
@@ -643,6 +644,7 @@ export class DocumentCreate extends OpenAPIRoute {
                     payment_terms_code = ?,
                     payment_terms_custom = ?,
                     customer_po_number = ?,
+                    e_way_bill_number = ?,
 
                     ship_to_same_as_bill_to = ?,
                     ship_to_name = ?,
@@ -674,6 +676,7 @@ export class DocumentCreate extends OpenAPIRoute {
                     ? body.payment_terms_custom?.trim() || null
                     : null,
                 body.customer_po_number?.trim() || null,
+                body.e_way_bill_number?.trim() || null,
 
                 body.ship_to_same_as_bill_to === undefined
                     ? null

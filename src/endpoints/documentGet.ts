@@ -34,6 +34,7 @@ type DocumentRow = {
     payment_terms_code: string | null;
     payment_terms_custom: string | null;
     customer_po_number: string | null;
+    e_way_bill_number: string | null;
 
     ship_to_same_as_bill_to: number | null;
     ship_to_name: string | null;
@@ -191,6 +192,7 @@ export class DocumentGet extends OpenAPIRoute {
                                                 d.payment_terms_code,
                                                 d.payment_terms_custom,
                                                 d.customer_po_number,
+                                                d.e_way_bill_number,
 
                                                 d.ship_to_same_as_bill_to,
                                                 d.ship_to_name,
@@ -447,6 +449,9 @@ export class DocumentGet extends OpenAPIRoute {
 
                 customer_po_number:
                     document.customer_po_number,
+
+                e_way_bill_number:
+                    document.e_way_bill_number,
 
                 ship_to: {
                     same_as_bill_to:

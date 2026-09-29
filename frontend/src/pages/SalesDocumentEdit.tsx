@@ -71,6 +71,9 @@ function salesEnhancementsFromInvoice(
     customerPoNumber:
       invoice.customer_po_number ?? "",
 
+    eWayBillNumber:
+      invoice.e_way_bill_number ?? "",
+
     referenceNumber:
       invoice.reference_number ?? "",
 

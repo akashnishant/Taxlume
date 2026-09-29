@@ -19,6 +19,7 @@ export type SalesEnhancementForm = {
   paymentTermsCode: PaymentTermsCode;
   paymentTermsCustom: string;
   customerPoNumber: string;
+  eWayBillNumber: string;
   referenceNumber: string;
   shipToSameAsBillTo: boolean;
   shipTo: Record<ShipToField, string>;
@@ -73,6 +74,7 @@ export function newSalesEnhancementForm(
     paymentTermsCode: "DUE_ON_RECEIPT",
     paymentTermsCustom: "",
     customerPoNumber: "",
+    eWayBillNumber: "",
     referenceNumber: "",
     shipToSameAsBillTo: true,
     shipTo: emptyShipTo(),
@@ -138,6 +140,7 @@ export function toSalesEnhancementRequest(form: SalesEnhancementForm) {
         ? form.paymentTermsCustom.trim()
         : undefined,
     customer_po_number: form.customerPoNumber.trim() || undefined,
+    e_way_bill_number: form.eWayBillNumber.trim() || undefined,
     ship_to_same_as_bill_to: form.shipToSameAsBillTo,
     ...(!form.shipToSameAsBillTo
       ? Object.fromEntries(
@@ -178,6 +181,9 @@ export function toSalesEnhancementUpdateRequest(
 
     customer_po_number:
       form.customerPoNumber.trim() || null,
+
+    e_way_bill_number:
+      form.eWayBillNumber.trim() || null,
 
     ship_to_same_as_bill_to:
       form.shipToSameAsBillTo,
