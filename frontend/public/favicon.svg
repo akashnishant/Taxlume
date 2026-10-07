@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Techabanca">
+  <rect width="64" height="64" rx="12" fill="#071315"/>
+  <g transform="translate(15 15) rotate(45 17 17)" fill="#BAF16D">
+    <rect x="0.75" y="0.75" width="32.5" height="32.5" rx="4" fill="none" stroke="#BAF16D" stroke-width="1.5"/>
+    <rect x="7" y="10" width="16" height="2"/>
+    <rect x="14" y="10" width="2" height="16"/>
+    <circle cx="28" cy="28" r="3"/>
+  </g>
+</svg>

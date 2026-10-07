@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { Download } from "lucide-react";
 import { Link } from "react-router-dom";
 import LoadingState from "../components/LoadingState";
 import ExpenseCreateModal from "../components/ExpenseCreateModal";
@@ -16,6 +17,7 @@ import {
   type ExpenseSource,
 } from "../services/expenseApi";
 import { getApiErrorMessage } from "../utils/apiErrorMessage";
+import { downloadXlsx } from "../utils/xlsxExport";
 
 type Category = {
   id: string;
@@ -80,6 +82,7 @@ export default function AllExpenses() {
   const [viewingExpenseId, setViewingExpenseId] = useState<string | null>(null);
   const [deletingExpense, setDeletingExpense] = useState<Expense | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [pagination, setPagination] = useState<ExpensePagination | null>(null);
@@ -234,6 +237,161 @@ export default function AllExpenses() {
       });
     } finally {
       setIsDeleting(false);
+    }
+  }
+
+
+  async function exportExpensesToExcel() {
+    if (isExporting) return;
+
+    setIsExporting(true);
+
+    try {
+      const exportFilters = {
+        search: search || undefined,
+        start_date: startDate || undefined,
+        end_date: endDate || undefined,
+        category_id: categoryId || undefined,
+        vendor_id: vendorId || undefined,
+        payment_method: paymentMethod || undefined,
+        source: source || undefined,
+      };
+
+      const firstResult = await getExpenses({
+        ...exportFilters,
+        page: 1,
+        limit: 100,
+      });
+
+      const exportRows = [...firstResult.expenses];
+
+      for (
+        let exportPage = 2;
+        exportPage <= firstResult.pagination.total_pages;
+        exportPage += 1
+      ) {
+        const nextResult = await getExpenses({
+          ...exportFilters,
+          page: exportPage,
+          limit: 100,
+        });
+
+        exportRows.push(...nextResult.expenses);
+      }
+
+      if (exportRows.length === 0) {
+        notify({
+          type: "warning",
+          title: "No expenses to export",
+          description:
+            "There are no expenses matching the currently applied filters.",
+        });
+        return;
+      }
+
+      const fileDate = new Date().toISOString().slice(0, 10);
+      const fileName = `techabanca-expenses-${fileDate}.xlsx`;
+
+      downloadXlsx({
+        fileName,
+        sheetName: "Expenses",
+        rows: exportRows,
+        columns: [
+          {
+            header: "Date",
+            width: 14,
+            value: (expense) => expense.expense_date,
+          },
+          {
+            header: "Expense",
+            width: 34,
+            value: (expense) =>
+              expense.description ||
+              expense.reference_number ||
+              "Expense",
+          },
+          {
+            header: "Category",
+            width: 24,
+            value: (expense) => expense.category_name ?? "",
+          },
+          {
+            header: "Parent Category",
+            width: 22,
+            value: (expense) =>
+              expense.parent_category_name ?? "",
+          },
+          {
+            header: "Vendor / Payee",
+            width: 28,
+            value: (expense) =>
+              expense.vendor_name ??
+              expense.payee_name ??
+              "",
+          },
+          {
+            header: "Payment Method",
+            width: 20,
+            value: (expense) =>
+              paymentMethodLabel(expense.payment_method),
+          },
+          {
+            header: "Source",
+            width: 14,
+            value: (expense) =>
+              expense.source === "RECURRING"
+                ? "Recurring"
+                : "Manual",
+          },
+          {
+            header: "Amount",
+            width: 16,
+            numberFormat: "decimal",
+            value: (expense) =>
+              expense.amount_paise / 100,
+          },
+          {
+            header: "Currency",
+            width: 12,
+            value: (expense) => expense.currency_code,
+          },
+          {
+            header: "Reference No.",
+            width: 22,
+            value: (expense) =>
+              expense.reference_number ?? "",
+          },
+          {
+            header: "Created At",
+            width: 24,
+            value: (expense) => expense.created_at,
+          },
+          {
+            header: "Updated At",
+            width: 24,
+            value: (expense) => expense.updated_at,
+          },
+        ],
+      });
+
+      notify({
+        type: "success",
+        title: "Expenses exported",
+        description: `${exportRows.length} expense${
+          exportRows.length === 1 ? "" : "s"
+        } exported to ${fileName}.`,
+      });
+    } catch (requestError) {
+      notify({
+        type: "error",
+        title: "Unable to export expenses",
+        description: getApiErrorMessage(
+          requestError,
+          "Please try the Excel export again.",
+        ),
+      });
+    } finally {
+      setIsExporting(false);
     }
   }
 
@@ -469,15 +627,34 @@ export default function AllExpenses() {
       </section>
 
       <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-5 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
           <h2 className="text-base font-semibold text-slate-900">
             All expenses
           </h2>
-          <span className="text-sm text-slate-500">
-            {pagination
-              ? `${pagination.total} expense${pagination.total === 1 ? "" : "s"}`
-              : "-"}
-          </span>
+
+          <div className="flex flex-wrap items-center justify-end gap-3">
+            <span className="text-sm text-slate-500">
+              {pagination
+                ? `${pagination.total} expense${pagination.total === 1 ? "" : "s"}`
+                : "-"}
+            </span>
+
+            <button
+              type="button"
+              onClick={() => void exportExpensesToExcel()}
+              disabled={
+                loading ||
+                Boolean(error) ||
+                !pagination ||
+                pagination.total === 0 ||
+                isExporting
+              }
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Download size={16} aria-hidden="true" />
+              {isExporting ? "Exporting..." : "Export to Excel"}
+            </button>
+          </div>
         </div>
 
         {loading ? (

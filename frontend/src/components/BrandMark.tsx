@@ -2,18 +2,41 @@ type BrandMarkProps = {
   className?: string;
 };
 
-// Matches the mark used on the Techabanca company website.
-export default function BrandMark({ className = "h-10 w-10" }: BrandMarkProps) {
+export default function BrandMark({
+  className = "h-[34px] w-[34px]",
+}: BrandMarkProps) {
   return (
-    <svg
-      className={className}
-      viewBox="0 0 64 64"
+    <span
       aria-hidden="true"
-      xmlns="http://www.w3.org/2000/svg"
+      className={`relative inline-block shrink-0 rotate-45 rounded-[12%] border border-[#BAF16D] ${className}`}
     >
-      <rect width="64" height="64" rx="13" fill="#081014" />
-      <path d="M13 18h38v8H36v24h-9V26H13z" fill="#eef4f1" />
-      <circle cx="48" cy="46" r="5" fill="#baf16d" />
-    </svg>
+      <span
+        className="absolute bg-[#BAF16D]"
+        style={{
+          left: "20.588%",
+          top: "29.412%",
+          width: "47.059%",
+          height: "5.882%",
+        }}
+      />
+      <span
+        className="absolute bg-[#BAF16D]"
+        style={{
+          left: "41.176%",
+          top: "29.412%",
+          width: "5.882%",
+          height: "47.059%",
+        }}
+      />
+      <span
+        className="absolute rounded-full bg-[#BAF16D]"
+        style={{
+          right: "8.824%",
+          bottom: "8.824%",
+          width: "17.647%",
+          height: "17.647%",
+        }}
+      />
+    </span>
   );
 }

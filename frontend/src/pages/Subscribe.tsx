@@ -12,7 +12,7 @@ import {
 import { endSession } from "../services/endSession";
 import { loadRazorpayCheckout } from "../payments/loadRazorpayCheckout";
 import SubscriptionCheckingScreen from "../components/SubscriptionCheckingScreen";
-import BrandMark from "../components/BrandMark";
+import BrandLockup from "../components/BrandLockup";
 
 function formatMoney(amountPaise: number): string {
   return new Intl.NumberFormat("en-IN", {
@@ -264,9 +264,7 @@ export default function Subscribe() {
     <div className="min-h-screen bg-slate-100 px-4 py-10">
       <div className="mx-auto w-full max-w-5xl">
         <div className="mb-10 text-center">
-          <BrandMark className="h-14 w-14 drop-shadow-lg" />
-
-          <h1 className="mt-4 text-3xl font-bold text-slate-900">Techabanca Billing</h1>
+          <BrandLockup size="lg" />
 
           <p className="mt-2 text-sm font-medium text-slate-600">
             Smart billing for growing businesses

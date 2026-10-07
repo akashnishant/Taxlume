@@ -17,7 +17,7 @@ import {
 import { Link } from "react-router-dom";
 
 import PricingSection from "../components/PricingSection";
-import BrandMark from "../components/BrandMark";
+import BrandLockup from "../components/BrandLockup";
 
 const capabilities = [
   {
@@ -118,23 +118,12 @@ function Brand({ light = false }: { light?: boolean }) {
     <a
       href="#top"
       aria-label="Back to the top of the Techabanca Billing welcome page"
-      className="inline-flex items-center gap-3"
+      className="inline-flex items-center"
     >
-      <BrandMark />
-      <span
-        className={`flex flex-col text-base font-bold leading-tight tracking-tight sm:text-lg ${
-          light ? "text-white" : "text-slate-950"
-        }`}
-      >
-        <span>Techabanca</span>
-        <span
-          className={`text-[10px] uppercase tracking-[0.2em] ${
-            light ? "text-lime-300" : "text-emerald-800"
-          }`}
-        >
-          Billing
-        </span>
-      </span>
+      <BrandLockup
+        size="md"
+        variant={light ? "dark" : "light"}
+      />
     </a>
   );
 }

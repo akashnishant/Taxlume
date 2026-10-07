@@ -7,7 +7,7 @@ import { setAuthToken } from "../services/authStorage";
 import { setSession } from "../services/sessionStorage";
 import ButtonLoadingContent from "../components/ButtonLoadingContent";
 import { startSessionTiming } from "../services/sessionTiming";
-import BrandMark from "../components/BrandMark";
+import BrandLockup from "../components/BrandLockup";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -77,9 +77,7 @@ export default function Login() {
             aria-label="Go to Techabanca Billing landing page"
             className="inline-flex flex-col items-center rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-800"
           >
-            <BrandMark className="h-14 w-14 drop-shadow-lg" />
-
-            <h1 className="mt-4 text-3xl font-bold text-slate-900">Techabanca Billing</h1>
+            <BrandLockup size="lg" />
 
             <p className="mt-2 text-sm font-medium text-slate-600">
               Smart billing for growing businesses

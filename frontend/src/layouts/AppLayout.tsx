@@ -1,6 +1,7 @@
 import {
   BarChart3,
   Building2,
+  FileCheck2,
   FileText,
   LayoutDashboard,
   LogOut,
@@ -18,7 +19,7 @@ import { Link, NavLink, Outlet } from "react-router-dom";
 import { getSession } from "../services/sessionStorage";
 import { getCompany, type Company } from "../services/companyApi";
 import { endSession } from "../services/endSession";
-import BrandMark from "../components/BrandMark";
+import BrandLockup from "../components/BrandLockup";
 
 const navigation = [
   {
@@ -30,6 +31,11 @@ const navigation = [
     label: "Sales",
     path: "/sales",
     icon: FileText,
+  },
+  {
+    label: "E-Way Bill",
+    path: "/eway-bill",
+    icon: FileCheck2,
   },
   {
     label: "Purchases",
@@ -118,34 +124,30 @@ export default function AppLayout() {
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-slate-200 bg-white transition-transform duration-200 lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-white transition-transform duration-200 lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex h-16 items-center justify-between border-b border-slate-200 px-5">
+        <div className="flex h-16 items-center justify-between border-b border-white/10 bg-[#071315] px-5">
           <Link
             to="/"
             className="flex items-center gap-3"
             onClick={() => setSidebarOpen(false)}
           >
-            <BrandMark className="h-9 w-9" />
-            <span className="flex flex-col leading-tight text-slate-900">
-              <span className="text-base font-bold tracking-tight">Techabanca</span>
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-800">Billing</span>
-            </span>
+            <BrandLockup size="sm" variant="dark" />
           </Link>
 
           <button
             type="button"
             onClick={() => setSidebarOpen(false)}
-            className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 lg:hidden"
+            className="rounded-lg p-1.5 text-slate-300 transition hover:bg-white/10 hover:text-white lg:hidden"
             aria-label="Close sidebar"
           >
             <X size={20} />
           </button>
         </div>
 
-        <nav className="flex-1 space-y-1 overflow-y-auto p-4">
+        <nav className="flex-1 space-y-1 overflow-y-auto border-r border-slate-200 p-4">
           {navigation.map((item) => {
             const Icon = item.icon;
 
@@ -164,13 +166,18 @@ export default function AppLayout() {
                 }
               >
                 <Icon size={18} />
-                <span>{item.label}</span>
+                <span className="min-w-0 flex-1">{item.label}</span>
+                {item.path === "/eway-bill" && (
+                  <span className="rounded-full bg-lime-200 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-emerald-950">
+                    Soon
+                  </span>
+                )}
               </NavLink>
             );
           })}
         </nav>
 
-        <div className="border-t border-slate-200 p-4">
+        <div className="border-r border-t border-slate-200 p-4">
           <div className="mb-3 flex items-center gap-3 rounded-lg bg-slate-50 p-3">
             <div
               aria-label="User initials"
@@ -200,28 +207,28 @@ export default function AppLayout() {
       </aside>
 
       <div className="lg:pl-64">
-        <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 shadow-sm sm:px-6">
+        <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-white/10 bg-[#071315] px-4 shadow-sm backdrop-blur-xl sm:px-6">
           <button
             type="button"
             onClick={() => setSidebarOpen(true)}
-            className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden"
+            className="rounded-lg p-2 text-slate-300 transition hover:bg-white/10 hover:text-white lg:hidden"
             aria-label="Open sidebar"
           >
             <Menu size={22} />
           </button>
 
           <div className="ml-auto flex items-center gap-3">
-            <Building2 size={18} className="text-slate-400" />
+            <Building2 size={18} className="text-lime-300" />
 
             <div className="text-right">
-              <p className="text-sm font-medium text-slate-800">
+              <p className="text-sm font-medium text-[#EEF4F1]">
                 {company?.trade_name ||
                   company?.legal_name ||
                   session?.company.trade_name ||
                   "Company"}
               </p>
 
-              <p className="text-xs text-slate-500">Company Account</p>
+              <p className="text-xs text-slate-400">Company Account</p>
             </div>
           </div>
         </header>

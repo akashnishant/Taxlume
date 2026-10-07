@@ -5,7 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { register as registerAccount } from "../services/authApi";
 import { gstStates } from "../constants/gstStates";
 import ButtonLoadingContent from "../components/ButtonLoadingContent";
-import BrandMark from "../components/BrandMark";
+import BrandLockup from "../components/BrandLockup";
 
 type RegisterForm = {
   fullName: string;
@@ -218,11 +218,7 @@ export default function Register() {
             aria-label="Go to Techabanca Billing landing page"
             className="inline-flex flex-col items-center rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-800"
           >
-            <BrandMark className="h-14 w-14 drop-shadow-lg" />
-
-            <span className="mt-4 text-3xl font-bold text-slate-900">
-              Techabanca Billing
-            </span>
+            <BrandLockup size="lg" />
           </Link>
 
           <p className="mt-2 text-sm font-medium text-slate-600">

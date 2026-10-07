@@ -27,6 +27,7 @@ import RecurringExpenses from "./pages/RecurringExpenses";
 import AllExpenses from "./pages/AllExpenses";
 import ExpenseCategories from "./pages/ExpenseCategories";
 import ExpenseReports from "./pages/ExpenseReports";
+import EWayBillComingSoon from "./pages/EWayBillComingSoon";
 import NewPurchase from "./pages/NewPurchase";
 import Subscribe from "./pages/Subscribe";
 import SubscriptionRequiredRoute from "./routes/SubscriptionRequiredRoute";
@@ -119,6 +120,10 @@ function App() {
                 }
               />
               <Route path="/sales" element={<Sales />} />
+              <Route
+                path="/eway-bill"
+                element={<EWayBillComingSoon />}
+              />
               <Route path="/sales/new" element={<NewSale />} />
               <Route path="/sales/:id" element={<SalesDocumentDetails />} />
               <Route path="/sales/:id/edit" element={<SalesDocumentEdit />} />
