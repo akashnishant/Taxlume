@@ -1,3 +1,4 @@
+
 import { OpenAPIRoute } from "chanfana";
 import { z } from "zod";
 import { type AppContext } from "../types";
@@ -38,8 +39,7 @@ const CustomerUpdateRequest = z.object({
                 ctx.addIssue({
                     code: z.ZodIssueCode.custom,
                     path: ["state_code"],
-                    message:
-                        "State and state code do not match.",
+                    message: "State and state code do not match.",
                 });
             }
         })
@@ -121,15 +121,15 @@ export class CustomerUpdate extends OpenAPIRoute {
 
         const customer = await c.env.DB
             .prepare(`
-				SELECT p.id
-				FROM parties p
-				INNER JOIN party_roles pr
-					ON pr.party_id = p.id
-				WHERE p.id = ?
-					AND p.company_id = ?
-					AND pr.role = 'CUSTOMER'
-				LIMIT 1
-			`)
+                SELECT p.id
+                FROM parties p
+                INNER JOIN party_roles pr
+                    ON pr.party_id = p.id
+                WHERE p.id = ?
+                    AND p.company_id = ?
+                    AND pr.role = 'CUSTOMER'
+                LIMIT 1
+            `)
             .bind(id, companyId)
             .first<{ id: string }>();
 
@@ -143,27 +143,27 @@ export class CustomerUpdate extends OpenAPIRoute {
             );
         }
 
-        await c.env.DB.batch([
+        const statements = [
             c.env.DB
                 .prepare(`
-					UPDATE parties
-					SET
-						display_name = ?,
-						legal_name = ?,
-						gstin = ?,
-						pan = ?,
-						email = ?,
-						phone = ?,
-						alternate_phone = ?,
-						contact_person = ?,
-						opening_balance_paise = ?,
-						credit_limit_paise = ?,
-						payment_terms_days = ?,
-						notes = ?,
-						updated_at = ?
-					WHERE id = ?
-						AND company_id = ?
-				`)
+                    UPDATE parties
+                    SET
+                        display_name = ?,
+                        legal_name = ?,
+                        gstin = ?,
+                        pan = ?,
+                        email = ?,
+                        phone = ?,
+                        alternate_phone = ?,
+                        contact_person = ?,
+                        opening_balance_paise = ?,
+                        credit_limit_paise = ?,
+                        payment_terms_days = ?,
+                        notes = ?,
+                        updated_at = ?
+                    WHERE id = ?
+                        AND company_id = ?
+                `)
                 .bind(
                     body.display_name,
                     body.legal_name ?? null,
@@ -181,38 +181,92 @@ export class CustomerUpdate extends OpenAPIRoute {
                     id,
                     companyId,
                 ),
+        ];
 
-            ...(body.address
-                ? [
-                    c.env.DB
-                        .prepare(`
-								UPDATE party_addresses
-								SET
-									address_line1 = ?,
-									address_line2 = ?,
-									city = ?,
-									state = ?,
-									state_code = ?,
-									pincode = ?,
-									country = ?,
-									updated_at = ?
-								WHERE party_id = ?
-									AND is_default = 1
-							`)
-                        .bind(
-                            body.address.address_line1,
-                            body.address.address_line2 ?? null,
-                            body.address.city ?? null,
-                            body.address.state ?? null,
-                            body.address.state_code ?? null,
-                            body.address.pincode ?? null,
-                            body.address.country,
-                            now,
+        if (body.address) {
+            statements.push(
+                c.env.DB
+                    .prepare(`
+                        UPDATE party_addresses
+                        SET
+                            address_line1 = ?,
+                            address_line2 = ?,
+                            city = ?,
+                            state = ?,
+                            state_code = ?,
+                            pincode = ?,
+                            country = ?,
+                            is_default = 1,
+                            updated_at = ?
+                        WHERE id = (
+                            SELECT id
+                            FROM party_addresses
+                            WHERE party_id = ?
+                            ORDER BY is_default DESC, created_at ASC
+                            LIMIT 1
+                        )
+                        AND party_id = ?
+                    `)
+                    .bind(
+                        body.address.address_line1,
+                        body.address.address_line2 ?? null,
+                        body.address.city,
+                        body.address.state,
+                        body.address.state_code,
+                        body.address.pincode,
+                        body.address.country,
+                        now,
+                        id,
+                        id,
+                    ),
+            );
+
+            statements.push(
+                c.env.DB
+                    .prepare(`
+                        INSERT INTO party_addresses (
                             id,
-                        ),
-                ]
-                : []),
-        ]);
+                            party_id,
+                            address_type,
+                            label,
+                            address_line1,
+                            address_line2,
+                            city,
+                            state,
+                            state_code,
+                            pincode,
+                            country,
+                            is_default,
+                            created_at,
+                            updated_at
+                        )
+                        SELECT
+                            ?, ?, 'BILLING', 'Primary',
+                            ?, ?, ?, ?, ?, ?, ?, 1, ?, ?
+                        WHERE NOT EXISTS (
+                            SELECT 1
+                            FROM party_addresses
+                            WHERE party_id = ?
+                        )
+                    `)
+                    .bind(
+                        crypto.randomUUID(),
+                        id,
+                        body.address.address_line1,
+                        body.address.address_line2 ?? null,
+                        body.address.city,
+                        body.address.state,
+                        body.address.state_code,
+                        body.address.pincode,
+                        body.address.country,
+                        now,
+                        now,
+                        id,
+                    ),
+            );
+        }
+
+        await c.env.DB.batch(statements);
 
         return {
             success: true,
