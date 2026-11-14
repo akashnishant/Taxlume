@@ -45,6 +45,7 @@ const PaymentTermsCode = z.enum([
 ]);
 
 const DocumentCreateRequest = z.object({
+    document_number: z.string().trim().min(1).max(100),
     document_type: z.enum([
         "TAX_INVOICE",
         "PROFORMA_INVOICE",
@@ -262,6 +263,32 @@ export class DocumentCreate extends OpenAPIRoute {
             await this.getValidatedData<typeof this.schema>();
 
         const body = data.body;
+
+        const existingDocument = await c.env.DB
+            .prepare(`
+                SELECT id
+                FROM documents
+                WHERE company_id = ?
+                    AND document_type = ?
+                    AND document_number = ?
+                LIMIT 1
+            `)
+            .bind(
+                companyId,
+                body.document_type,
+                body.document_number,
+            )
+            .first<{ id: string }>();
+
+        if (existingDocument) {
+            return c.json(
+                {
+                    success: false,
+                    message: "This document number is already in use for this document type.",
+                },
+                409,
+            );
+        }
 
         /*
         * Validate that the document uses the correct party role.
@@ -526,17 +553,7 @@ export class DocumentCreate extends OpenAPIRoute {
         const documentId =
             crypto.randomUUID();
 
-        /*
-         * A DRAFT must not consume an official document sequence.
-         *
-         * document_number remains NOT NULL / UNIQUE in the database,
-         * therefore drafts use an internal unique placeholder.
-         *
-         * The placeholder is replaced by the official number only
-         * during DRAFT -> ISSUED.
-         */
-        const documentNumber =
-            `DRAFT-${documentId}`;
+        const documentNumber = body.document_number;
 
         const now =
             new Date().toISOString();
