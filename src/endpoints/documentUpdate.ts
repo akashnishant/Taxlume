@@ -44,6 +44,7 @@ const PaymentTermsCode = z.enum([
 ]);
 
 const DocumentUpdateRequest = z.object({
+    document_number: z.string().trim().min(1).max(100).optional(),
     document_date: z.string().date().optional(),
     due_date: z.string().date().nullable().optional(),
     party_id: z.string().uuid().nullable().optional(),
@@ -274,6 +275,41 @@ export class DocumentUpdate extends OpenAPIRoute {
                 },
                 409,
             );
+        }
+
+        const updatedDocumentNumber =
+            body.document_number !== undefined
+                ? body.document_number.trim()
+                : document.document_number;
+
+        if (body.document_number !== undefined) {
+            const existingDocument = await c.env.DB
+                .prepare(`
+                    SELECT id
+                    FROM documents
+                    WHERE company_id = ?
+                        AND document_type = ?
+                        AND document_number = ?
+                        AND id != ?
+                    LIMIT 1
+                `)
+                .bind(
+                    companyId,
+                    document.document_type,
+                    updatedDocumentNumber,
+                    document.id,
+                )
+                .first<{ id: string }>();
+
+            if (existingDocument) {
+                return c.json(
+                    {
+                        success: false,
+                        message: "This document number is already in use for this document type.",
+                    },
+                    409,
+                );
+            }
         }
 
         const placeOfSupplyChanged =
@@ -893,6 +929,7 @@ export class DocumentUpdate extends OpenAPIRoute {
                 .prepare(`
                 UPDATE documents
                 SET
+                    document_number = ?,
                     document_date = ?,
                     due_date = ?,
                     party_id = ?,
@@ -917,6 +954,7 @@ export class DocumentUpdate extends OpenAPIRoute {
                     AND status = 'DRAFT'
             `)
             .bind(
+                updatedDocumentNumber,
                 updatedDocumentDate,
                 updatedDueDate,
                 updatedPartyId,
@@ -1128,7 +1166,7 @@ export class DocumentUpdate extends OpenAPIRoute {
             "DOCUMENT_UPDATED",
             JSON.stringify({
                 document_type: document.document_type,
-                document_number: document.document_number,
+                document_number: updatedDocumentNumber,
                 updated_fields: Object.keys(body),
             }),
             now,
@@ -1147,7 +1185,7 @@ export class DocumentUpdate extends OpenAPIRoute {
             document: {
                 id: document.id,
                 document_type: document.document_type,
-                document_number: document.document_number,
+                document_number: updatedDocumentNumber,
                 document_date: updatedDocumentDate,
                 status: "DRAFT",
                 updated_at: now,
