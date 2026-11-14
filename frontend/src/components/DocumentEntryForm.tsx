@@ -52,6 +52,8 @@ export default function DocumentEntryForm({ config }: DocumentEntryFormProps) {
 
   const [documentDate, setDocumentDate] = useState(getTodayDate);
 
+  const [documentNumber, setDocumentNumber] = useState("");
+
   const [salesEnhancements, setSalesEnhancements] = useState(() =>
     newSalesEnhancementForm(getTodayDate()),
   );
@@ -264,6 +266,11 @@ export default function DocumentEntryForm({ config }: DocumentEntryFormProps) {
 
     setSaveError("");
 
+    if (!documentNumber.trim()) {
+     setSaveError("Please enter a document number.");
+     return;
+    }
+
     if (!documentDate) {
       setSaveError("Please select a document date.");
       return;
@@ -352,6 +359,7 @@ export default function DocumentEntryForm({ config }: DocumentEntryFormProps) {
       setIsSaving(true);
 
       await createDocument({
+        document_number: documentNumber.trim(),
         document_type: config.documentType,
         document_date: documentDate,
         party_id: partyId,
@@ -533,9 +541,13 @@ export default function DocumentEntryForm({ config }: DocumentEntryFormProps) {
 
               <input
                 type="text"
-                placeholder="Auto-generated"
-                disabled
-                className="w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-500 outline-none"
+                value={documentNumber}
+                onChange={(event) => setDocumentNumber(event.target.value)}
+                placeholder="Enter document number"
+                maxLength={100}
+                required
+                disabled={isSaving}
+                className="w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500"
               />
             </div>
 
