@@ -154,6 +154,8 @@ export default function SalesDocumentEdit() {
 
   const [documentDate, setDocumentDate] = useState("");
 
+  const [documentNumber, setDocumentNumber] = useState("");
+
   const [salesEnhancements, setSalesEnhancements] =
     useState<SalesEnhancementForm>(
       () => newSalesEnhancementForm(""),
@@ -205,7 +207,12 @@ export default function SalesDocumentEdit() {
         }
 
         setDocument(response);
-        setDocumentDate(response.document_date);
+        setDocumentNumber(
+          response.document_number.startsWith("DRAFT-")
+          ? ""
+          : response.document_number,
+         );
+         setDocumentDate(response.document_date);
 
         if (!isPurchaseRoute) {
           setSalesEnhancements(
@@ -586,6 +593,11 @@ export default function SalesDocumentEdit() {
       return;
     }
 
+    if (!documentNumber.trim()) {
+       setSaveError("Please enter a document number.");
+       return;
+    }
+
     if (!documentDate) {
       setSaveError("Document Date is required.");
       return;
@@ -686,6 +698,8 @@ export default function SalesDocumentEdit() {
 
     try {
       await updateDocument(id, {
+        document_number: documentNumber.trim(),
+        
         document_date:
           documentDate,
 
@@ -800,14 +814,30 @@ export default function SalesDocumentEdit() {
 
       <h1 className="text-2xl font-bold text-slate-900">Edit Draft</h1>
 
-      <p className="mt-2 text-sm text-slate-500">{document.document_number}</p>
-
       <div className="mt-6 rounded-lg border border-slate-200 bg-white p-6">
         <h2 className="text-lg font-semibold text-slate-900">
           Document Details
         </h2>
 
         <div className="mt-6 max-w-md">
+          <label
+  htmlFor="document-number"
+  className="mb-2 block text-sm font-medium text-slate-700"
+>
+  Document Number
+</label>
+
+<input
+  id="document-number"
+  type="text"
+  value={documentNumber}
+  onChange={(event) => setDocumentNumber(event.target.value)}
+  placeholder="Enter document number"
+  maxLength={100}
+  required
+  disabled={isSaving}
+  className="mb-5 w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-500"
+/>
           <label
             htmlFor="document-date"
             className="mb-2 block text-sm font-medium text-slate-700"
