@@ -1,5 +1,6 @@
 export type DocumentValidationInput = {
     documentType: string;
+    documentNumber: string;
     status: string;
     partyId: string | null;
 
@@ -47,6 +48,16 @@ export function validateDocumentForIssuance(
             `Only DRAFT documents can be issued. Current status: ${input.status}`,
         );
     }
+
+    if (!input.documentNumber.trim()) {
+        errors.push("Document number is required before issuing.");
+    } else if (
+        input.documentNumber.trim().toUpperCase().startsWith("DRAFT-")
+    ) {
+        errors.push(
+            "Please enter a valid document number before issuing.",
+        );
+     }
 
     if (!input.company.legalName?.trim()) {
         errors.push("Company legal name is required.");
