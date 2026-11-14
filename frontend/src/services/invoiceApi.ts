@@ -32,6 +32,7 @@ export type PaymentTermsCode =
     | "CUSTOM";
 
 export type CreateDocumentRequest = {
+    document_number: string;
     document_type:
         | "TAX_INVOICE"
         | "PROFORMA_INVOICE"
@@ -296,6 +297,7 @@ export type UpdateDocumentItemRequest = {
 };
 
 export type UpdateDocumentRequest = {
+    document_number?: string;
     document_date?: string;
     due_date?: string | null;
     party_id?: string | null;
