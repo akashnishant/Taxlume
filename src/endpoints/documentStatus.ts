@@ -282,11 +282,12 @@ export class DocumentStatus extends OpenAPIRoute {
          * document rather than issue a new one.
          */
 
-        const needsOfficialNumber =
-            currentStatus === "DRAFT" &&
-            requestedStatus === "ISSUED" &&
-            document.document_number ===
-                `DRAFT-${document.id}`;
+                /*
+         * Document numbers are entered manually.
+         * Issuance must preserve the number already saved on the draft.
+         * No document number sequence is allocated or advanced here.
+         */
+        const needsOfficialNumber = false;
 
         let snapshotStatement: D1PreparedStatement | null = null;
 
@@ -707,6 +708,7 @@ export class DocumentStatus extends OpenAPIRoute {
             const validation =
                 validateDocumentForIssuance({
                     documentType: document.document_type,
+                    documentNumber: document.document_number,
                     status: currentStatus,
                     partyId: document.party_id,
                     company: {
