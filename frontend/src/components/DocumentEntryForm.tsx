@@ -174,6 +174,95 @@ const [sourceDocumentLoadError, setSourceDocumentLoadError] = useState("");
   void loadSourceDocuments();
 }, [config.documentType]);
 
+  async function handleSourceDocumentChange(sourceId: string) {
+  setSourceDocumentId(sourceId);
+
+  if (!sourceId) {
+    return;
+  }
+
+  setSourceDocumentLoadError("");
+
+  try {
+    const source = await getInvoice(sourceId);
+
+    if (!source.party?.id) {
+      throw new Error("The source document has no customer information.");
+    }
+
+    setPartyId(source.party.id);
+
+    setPlaceOfSupplyStateCode(
+      source.place_of_supply.state_code ?? "",
+    );
+
+    setNotes(source.notes ?? "");
+    setTermsAndConditions(source.terms_and_conditions ?? "");
+
+    setItems(
+      source.items.map((item) => ({
+        id: crypto.randomUUID(),
+        productId: item.product_id ?? "",
+        quantity: item.quantity_milli / 1000,
+        ratePaise: item.rate_paise,
+        discountPaise: item.discount_paise,
+        gstRateBps: item.gst_rate_bps,
+        itemName: item.item_name,
+        description: item.description ?? "",
+        hsnSac: item.hsn_sac ?? "",
+        unit: item.unit ?? "Nos",
+        cessRateBps: item.cess_rate_bps,
+      })),
+    );
+
+    setSalesEnhancements((current) => ({
+      ...current,
+      dueDate: source.due_date ?? "",
+      paymentTermsCode:
+        source.payment_terms.code ?? "DUE_ON_RECEIPT",
+      paymentTermsCustom:
+        source.payment_terms.custom ?? "",
+      customerPoNumber:
+        source.customer_po_number ?? "",
+      eWayBillNumber:
+        source.e_way_bill_number ?? "",
+      referenceNumber:
+        source.reference_number ?? "",
+      shipToSameAsBillTo:
+        source.ship_to.same_as_bill_to ?? true,
+      shipTo: {
+        name: source.ship_to.name ?? "",
+        contact_person: source.ship_to.contact_person ?? "",
+        gstin: source.ship_to.gstin ?? "",
+        phone: source.ship_to.phone ?? "",
+        email: source.ship_to.email ?? "",
+        address_line1: source.ship_to.address_line1 ?? "",
+        address_line2: source.ship_to.address_line2 ?? "",
+        city: source.ship_to.city ?? "",
+        state: source.ship_to.state ?? "",
+        state_code: source.ship_to.state_code ?? "",
+        pincode: source.ship_to.pincode ?? "",
+        country: source.ship_to.country ?? "India",
+      },
+      additionalChargeLabel:
+        source.additional_charge.label ?? "",
+      additionalChargePaise:
+        source.additional_charge.amount_paise,
+      additionalChargeTaxable:
+        source.additional_charge.taxable,
+      additionalChargeGstRateBps:
+        source.additional_charge.gst_rate_bps,
+    }));
+  } catch (error) {
+    setSourceDocumentId("");
+    setSourceDocumentLoadError(
+      error instanceof Error
+        ? error.message
+        : "Unable to load the selected source document.",
+    );
+  }
+  }
+
   const selectedParty =
     config.parties.find((party) => party.id === partyId) ?? null;
 
@@ -617,7 +706,7 @@ const [sourceDocumentLoadError, setSourceDocumentLoadError] = useState("");
 
     <select
       value={sourceDocumentId}
-      onChange={(event) => setSourceDocumentId(event.target.value)}
+      onChange={(event) => void handleSourceDocumentChange(event.target.value)}
       disabled={isSourceDocumentsLoading || isSaving}
       className="w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500"
     >
