@@ -9,6 +9,16 @@ export type Invoice = {
     total_paise: number;
 };
 
+export type SourceDocumentOption = {
+    id: string;
+    document_type: string;
+    document_number: string;
+    document_date: string;
+    party_id: string | null;
+    party_name: string | null;
+    status: string;
+};
+
 export type CreateDocumentItemRequest = {
     product_id?: string;
     item_name: string;
@@ -49,6 +59,7 @@ export type CreateDocumentRequest = {
     notes?: string;
     terms_and_conditions?: string;
     reference_number?: string;
+    source_document_id?: string;
 
     payment_terms_code?: PaymentTermsCode;
     payment_terms_custom?: string;
@@ -377,6 +388,41 @@ export async function getInvoices(): Promise<{
         documents: response.data.documents,
         total: response.data.pagination.total,
     };
+}
+
+export async function getEligibleSourceDocuments(
+    documentType: "QUOTATION" | "PROFORMA_INVOICE",
+): Promise<SourceDocumentOption[]> {
+    const documents: SourceDocumentOption[] = [];
+
+    let page = 1;
+    let totalPages = 1;
+
+    do {
+        const response = await api.get<{
+            success: boolean;
+            documents: SourceDocumentOption[];
+            pagination: {
+                page: number;
+                limit: number;
+                total: number;
+                total_pages: number;
+            };
+        }>("/api/documents", {
+            params: {
+                page,
+                limit: 100,
+                document_type: documentType,
+                status: "ISSUED",
+            },
+        });
+
+        documents.push(...response.data.documents);
+        totalPages = response.data.pagination.total_pages;
+        page += 1;
+    } while (page <= totalPages);
+
+    return documents;
 }
 
 export async function getInvoice(
