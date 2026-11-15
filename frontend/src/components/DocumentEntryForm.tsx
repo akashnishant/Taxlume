@@ -8,7 +8,12 @@ import { getCompany, type Company } from "../services/companyApi";
 import type { DocumentFormConfig } from "../types/documentFormConfig";
 import { getDocumentSupplierStateCode } from "../utils/documentTaxContext";
 import { getProducts, type Product } from "../services/productApi";
-import { createDocument } from "../services/invoiceApi";
+import {
+  createDocument,
+  getEligibleSourceDocuments,
+  getInvoice,
+  type SourceDocumentOption,
+} from "../services/invoiceApi";
 
 import type { DocumentFormItem } from "../types/documentForm";
 
@@ -74,6 +79,17 @@ export default function DocumentEntryForm({ config }: DocumentEntryFormProps) {
 
   const [items, setItems] = useState<DocumentFormItem[]>([]);
 
+  const [sourceDocumentId, setSourceDocumentId] = useState("");
+
+const [sourceDocuments, setSourceDocuments] = useState<
+  SourceDocumentOption[]
+>([]);
+
+const [isSourceDocumentsLoading, setIsSourceDocumentsLoading] =
+  useState(false);
+
+const [sourceDocumentLoadError, setSourceDocumentLoadError] = useState("");
+
   const [isSaving, setIsSaving] = useState(false);
 
   const [saveError, setSaveError] = useState("");
@@ -121,6 +137,42 @@ export default function DocumentEntryForm({ config }: DocumentEntryFormProps) {
 
     void loadProducts();
   }, []);
+
+  useEffect(() => {
+  const sourceDocumentType =
+    config.documentType === "PROFORMA_INVOICE"
+      ? "QUOTATION"
+      : config.documentType === "TAX_INVOICE" ||
+          config.documentType === "DELIVERY_CHALLAN"
+        ? "PROFORMA_INVOICE"
+        : null;
+
+  if (!sourceDocumentType) {
+    setSourceDocuments([]);
+    return;
+  }
+
+  async function loadSourceDocuments() {
+    setIsSourceDocumentsLoading(true);
+    setSourceDocumentLoadError("");
+
+    try {
+      const response =
+        await getEligibleSourceDocuments(sourceDocumentType);
+
+      setSourceDocuments(response);
+    } catch {
+      setSourceDocuments([]);
+      setSourceDocumentLoadError(
+        "Unable to load eligible source documents. Please try again.",
+      );
+    } finally {
+      setIsSourceDocumentsLoading(false);
+    }
+  }
+
+  void loadSourceDocuments();
+}, [config.documentType]);
 
   const selectedParty =
     config.parties.find((party) => party.id === partyId) ?? null;
