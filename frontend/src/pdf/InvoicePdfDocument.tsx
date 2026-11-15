@@ -40,6 +40,7 @@ type InvoicePdfDocumentProps = {
   paymentDetails: PdfPaymentDetails;
   paymentQrDataUrl: string | null;
   signatureDataUrl: string | null;
+  copyType?: "RECIPIENT" | "TRANSPORT" | null;
 };
 
 const styles = StyleSheet.create({
@@ -657,6 +658,7 @@ export default function InvoicePdfDocument({
   paymentDetails,
   paymentQrDataUrl,
   signatureDataUrl,
+  copyType,
 }: InvoicePdfDocumentProps) {
   const partyAddress = getPartyAddress(document);
   const isPurchaseOrder = document.document_type === "PURCHASE_ORDER";
@@ -745,16 +747,16 @@ export default function InvoicePdfDocument({
 </Text>
 
 {(document.document_type === "TAX_INVOICE" ||
-  document.document_type === "DELIVERY_CHALLAN") && (
-  <View style={styles.documentCopyLabels}>
-    <Text style={styles.documentCopyLabel}>
-      For Recipient
-    </Text>
-    <Text style={styles.documentCopyLabel}>
-      For Transport
-    </Text>
-  </View>
-)}
+  document.document_type === "DELIVERY_CHALLAN") &&
+  copyType && (
+    <View style={styles.documentCopyLabels}>
+      <Text style={styles.documentCopyLabel}>
+        {copyType === "RECIPIENT"
+          ? "For Recipient"
+          : "For Transport"}
+      </Text>
+    </View>
+  )}
 
 <Text style={styles.documentNumber}>
   {document.document_number}
