@@ -116,6 +116,19 @@ const styles = StyleSheet.create({
     lineHeight: 1.15,
   },
 
+  documentCopyLabels: {
+  flexDirection: "row",
+  justifyContent: "flex-end",
+  marginTop: 2,
+},
+
+documentCopyLabel: {
+  fontSize: 6.5,
+  fontWeight: 700,
+  marginLeft: 8,
+  textAlign: "right",
+},
+
   documentNumber: {
     marginTop: 3,
     fontSize: 7.2,
@@ -728,12 +741,24 @@ export default function InvoicePdfDocument({
 
           <View style={styles.documentHeadingBlock}>
             <Text style={styles.documentTitle}>
-              {formatDocumentType(document.document_type)}
-            </Text>
+  {formatDocumentType(document.document_type)}
+</Text>
 
-            <Text style={styles.documentNumber}>
-              {document.document_number}
-            </Text>
+{(document.document_type === "TAX_INVOICE" ||
+  document.document_type === "DELIVERY_CHALLAN") && (
+  <View style={styles.documentCopyLabels}>
+    <Text style={styles.documentCopyLabel}>
+      For Recipient
+    </Text>
+    <Text style={styles.documentCopyLabel}>
+      For Transport
+    </Text>
+  </View>
+)}
+
+<Text style={styles.documentNumber}>
+  {document.document_number}
+</Text>
           </View>
         </View>
 
