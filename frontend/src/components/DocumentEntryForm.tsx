@@ -450,7 +450,7 @@ const [sourceDocumentLoadError, setSourceDocumentLoadError] = useState("");
       const grossAmountPaise = getGrossPaise(item.quantity, item.ratePaise);
 
       return (
-        !item.productId ||
+        !(item.productId || item.itemName?.trim()) ||
         !Number.isFinite(item.quantity) ||
         !Number.isFinite(quantityMilli) ||
         quantityMilli <= 0 ||
@@ -471,27 +471,32 @@ const [sourceDocumentLoadError, setSourceDocumentLoadError] = useState("");
 
     try {
       const documentItems = items.map((item) => {
-        const product = products.find(
-          (currentProduct) => currentProduct.id === item.productId,
-        );
+  const product = products.find(
+    (currentProduct) => currentProduct.id === item.productId,
+  );
 
-        if (!product) {
-          throw new Error("A selected product could not be found.");
-        }
+  if (!product && !item.itemName?.trim()) {
+    throw new Error(
+      "A selected product could not be found. Please select a product or service.",
+    );
+  }
 
-        return {
-          product_id: product.id,
-          item_name: product.name,
-          description: product.description ?? undefined,
-          hsn_sac: product.hsn_sac ?? undefined,
-          unit: product.unit,
-          quantity_milli: getQuantityMilli(item.quantity),
-          rate_paise: item.ratePaise,
-          discount_paise: item.discountPaise,
-          gst_rate_bps: item.gstRateBps,
-          cess_rate_bps: product.cess_rate_bps,
-        };
-      });
+  return {
+    product_id: product?.id,
+    item_name: product?.name ?? item.itemName!.trim(),
+    description:
+      product?.description ?? item.description ?? undefined,
+    hsn_sac:
+      product?.hsn_sac ?? item.hsnSac ?? undefined,
+    unit: product?.unit ?? item.unit ?? "Nos",
+    quantity_milli: getQuantityMilli(item.quantity),
+    rate_paise: item.ratePaise,
+    discount_paise: item.discountPaise,
+    gst_rate_bps: item.gstRateBps,
+    cess_rate_bps:
+      product?.cess_rate_bps ?? item.cessRateBps ?? 0,
+  };
+});
 
       const placeOfSupply = gstStates.find(
         (state) => state.code === placeOfSupplyStateCode,
@@ -507,6 +512,7 @@ const [sourceDocumentLoadError, setSourceDocumentLoadError] = useState("");
         place_of_supply_state: placeOfSupply?.name,
         place_of_supply_state_code: placeOfSupplyStateCode,
         currency_code: "INR",
+        source_document_id: sourceDocumentId || undefined,
         ...(config.mode === "SALES"
           ? {
               due_date:
