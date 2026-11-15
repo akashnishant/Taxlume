@@ -63,6 +63,7 @@ const DocumentCreateRequest = z.object({
     notes: z.string().max(10000).optional(),
     terms_and_conditions: z.string().max(10000).optional(),
     reference_number: z.string().max(100).optional(),
+    source_document_id: z.string().uuid().optional(),
 
     payment_terms_code: PaymentTermsCode.optional(),
     payment_terms_custom: z.string().trim().max(500).optional(),
@@ -263,6 +264,69 @@ export class DocumentCreate extends OpenAPIRoute {
             await this.getValidatedData<typeof this.schema>();
 
         const body = data.body;
+
+        if (body.source_document_id) {
+            const expectedSourceType =
+                body.document_type === "PROFORMA_INVOICE"
+                    ? "QUOTATION"
+                    : body.document_type === "TAX_INVOICE" ||
+                        body.document_type === "DELIVERY_CHALLAN"
+                      ? "PROFORMA_INVOICE"
+                      : null;
+
+            if (!expectedSourceType) {
+                return c.json(
+                    {
+                        success: false,
+                        message:
+                            "This document type cannot be created from a source document.",
+                    },
+                    400,
+                );
+            }
+
+            const sourceDocument = await c.env.DB
+                .prepare(`
+                    SELECT id, party_id
+                    FROM documents
+                    WHERE id = ?
+                        AND company_id = ?
+                        AND document_type = ?
+                        AND status = 'ISSUED'
+                    LIMIT 1
+                `)
+                .bind(
+                    body.source_document_id,
+                    companyId,
+                    expectedSourceType,
+                )
+                .first<{
+                    id: string;
+                    party_id: string | null;
+                }>();
+
+            if (!sourceDocument) {
+                return c.json(
+                    {
+                        success: false,
+                        message:
+                            "The selected source document is unavailable, cancelled, or not issued.",
+                    },
+                    400,
+                );
+            }
+
+            if (sourceDocument.party_id !== body.party_id) {
+                return c.json(
+                    {
+                        success: false,
+                        message:
+                            "The source document belongs to a different customer.",
+                    },
+                    400,
+                );
+            }
+        }
 
         const existingDocument = await c.env.DB
             .prepare(`
@@ -617,7 +681,7 @@ export class DocumentCreate extends OpenAPIRoute {
                     ?,
                     ?,
                     ?,
-                    NULL,
+                    ?,
                     ?,
                     ?,
                     ?
@@ -649,6 +713,7 @@ export class DocumentCreate extends OpenAPIRoute {
                     body.terms_and_conditions ??
                     null,
                     body.reference_number ?? null,
+                    body.source_document_id ?? null,
                     userId,
                     now,
                     now,
