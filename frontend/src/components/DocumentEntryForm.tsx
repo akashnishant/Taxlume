@@ -139,7 +139,10 @@ const [sourceDocumentLoadError, setSourceDocumentLoadError] = useState("");
   }, []);
 
   useEffect(() => {
-  const sourceDocumentType =
+  const sourceDocumentType:
+    | "QUOTATION"
+    | "PROFORMA_INVOICE"
+    | null =
     config.documentType === "PROFORMA_INVOICE"
       ? "QUOTATION"
       : config.documentType === "TAX_INVOICE" ||
@@ -147,18 +150,20 @@ const [sourceDocumentLoadError, setSourceDocumentLoadError] = useState("");
         ? "PROFORMA_INVOICE"
         : null;
 
-  if (!sourceDocumentType) {
+  if (sourceDocumentType === null) {
     setSourceDocuments([]);
     return;
   }
 
-  async function loadSourceDocuments() {
+  async function loadSourceDocuments(
+    sourceType: "QUOTATION" | "PROFORMA_INVOICE",
+  ) {
     setIsSourceDocumentsLoading(true);
     setSourceDocumentLoadError("");
 
     try {
       const response =
-        await getEligibleSourceDocuments(sourceDocumentType);
+        await getEligibleSourceDocuments(sourceType);
 
       setSourceDocuments(response);
     } catch {
@@ -171,7 +176,7 @@ const [sourceDocumentLoadError, setSourceDocumentLoadError] = useState("");
     }
   }
 
-  void loadSourceDocuments();
+  void loadSourceDocuments(sourceDocumentType);
 }, [config.documentType]);
 
   async function handleSourceDocumentChange(sourceId: string) {
