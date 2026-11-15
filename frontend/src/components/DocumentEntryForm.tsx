@@ -621,8 +621,8 @@ const [sourceDocumentLoadError, setSourceDocumentLoadError] = useState("");
             discountPaise: item.discountPaise,
             gstRateBps: item.gstRateBps,
             cessRateBps:
-              products.find((product) => product.id === item.productId)
-                ?.cess_rate_bps ?? 0,
+               products.find((product) => product.id === item.productId)
+               ?.cess_rate_bps ?? item.cessRateBps ?? 0,
           })),
           isIntraState,
           salesEnhancements,
@@ -892,14 +892,25 @@ const [sourceDocumentLoadError, setSourceDocumentLoadError] = useState("");
                     className="w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500"
                   >
                     <option value="" disabled>
-                      {isProductsLoading
-                        ? "Loading products..."
-                        : productLoadError
-                          ? "Unable to load products and services"
-                          : activeProducts.length === 0
-                            ? "No products or services available"
-                            : "Select product or service"}
-                    </option>
+  {item.itemName &&
+  !activeProducts.some((product) => product.id === item.productId)
+    ? `Source item: ${item.itemName}`
+    : isProductsLoading
+      ? "Loading products..."
+      : productLoadError
+        ? "Unable to load products and services"
+        : activeProducts.length === 0
+          ? "No products or services available"
+          : "Select product or service"}
+</option>
+
+{item.productId &&
+  item.itemName &&
+  !activeProducts.some((product) => product.id === item.productId) && (
+    <option value={item.productId} disabled>
+      {item.itemName} (from source document)
+    </option>
+  )}
 
                     {activeProducts.map((product) => (
                       <option key={product.id} value={product.id}>
