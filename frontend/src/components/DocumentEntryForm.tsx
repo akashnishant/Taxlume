@@ -603,6 +603,47 @@ const [sourceDocumentLoadError, setSourceDocumentLoadError] = useState("");
               />
             </div>
 
+            {(
+  config.documentType === "PROFORMA_INVOICE" ||
+  config.documentType === "TAX_INVOICE" ||
+  config.documentType === "DELIVERY_CHALLAN"
+) && (
+  <div>
+    <label className="mb-2 block text-sm font-medium text-slate-700">
+      {config.documentType === "PROFORMA_INVOICE"
+        ? "Select Quotation"
+        : "Select Proforma Invoice"}
+    </label>
+
+    <select
+      value={sourceDocumentId}
+      onChange={(event) => setSourceDocumentId(event.target.value)}
+      disabled={isSourceDocumentsLoading || isSaving}
+      className="w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500"
+    >
+      <option value="">
+        {isSourceDocumentsLoading
+          ? "Loading source documents..."
+          : sourceDocuments.length === 0
+            ? "No eligible source documents"
+            : "Select source document (optional)"}
+      </option>
+
+      {sourceDocuments.map((document) => (
+        <option key={document.id} value={document.id}>
+          {document.document_number} — {document.party_name ?? "Unknown customer"} — {document.document_date}
+        </option>
+      ))}
+    </select>
+
+    {sourceDocumentLoadError && (
+      <p className="mt-2 text-sm text-red-600">
+        {sourceDocumentLoadError}
+      </p>
+    )}
+  </div>
+)}
+
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 Document Date
