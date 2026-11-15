@@ -118,6 +118,8 @@ export default function SalesDocumentDetails() {
 
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
+  const [showCopyTypeDialog, setShowCopyTypeDialog] = useState(false);
+
   const [pendingAction, setPendingAction] = useState<"ISSUE" | "CANCEL" | null>(
     null,
   );
@@ -378,7 +380,9 @@ export default function SalesDocumentDetails() {
     }
   }
 
-  async function handleDownloadPdf() {
+  async function generatePdf(
+    copyType: "RECIPIENT" | "TRANSPORT" | null = null,
+  ) {
     if (!document || isGeneratingPdf || isIssuing || isCancelling) {
       return;
     }
@@ -492,6 +496,7 @@ export default function SalesDocumentDetails() {
           paymentDetails={paymentDetails}
           paymentQrDataUrl={paymentQrDataUrl}
           signatureDataUrl={signatureDataUrl}
+          copyType={copyType}
         />,
       ).toBlob();
 
@@ -513,6 +518,29 @@ export default function SalesDocumentDetails() {
       setIsGeneratingPdf(false);
     }
   }
+
+  function handleDownloadPdf() {
+  if (!document || isGeneratingPdf || isIssuing || isCancelling) {
+    return;
+  }
+
+  if (
+    document.document_type === "TAX_INVOICE" ||
+    document.document_type === "DELIVERY_CHALLAN"
+  ) {
+    setShowCopyTypeDialog(true);
+    return;
+  }
+
+  void generatePdf();
+}
+
+function handleCopyTypeSelection(
+  copyType: "RECIPIENT" | "TRANSPORT",
+) {
+  setShowCopyTypeDialog(false);
+  void generatePdf(copyType);
+}
 
   if (isLoading) {
     return (
@@ -1354,6 +1382,56 @@ export default function SalesDocumentDetails() {
             />
           )}
       </div>
+
+      {showCopyTypeDialog && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="copy-type-title"
+      className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl"
+    >
+      <h2
+        id="copy-type-title"
+        className="text-lg font-semibold text-slate-900"
+      >
+        Select PDF Copy Type
+      </h2>
+
+      <p className="mt-2 text-sm text-slate-600">
+        Choose which copy you want to download.
+      </p>
+
+      <div className="mt-6 grid grid-cols-1 gap-3">
+        <button
+          type="button"
+          onClick={() => handleCopyTypeSelection("RECIPIENT")}
+          className="rounded-lg border border-slate-300 px-4 py-3 text-left text-sm font-semibold text-slate-800 hover:bg-slate-50"
+        >
+          For Recipient
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleCopyTypeSelection("TRANSPORT")}
+          className="rounded-lg border border-slate-300 px-4 py-3 text-left text-sm font-semibold text-slate-800 hover:bg-slate-50"
+        >
+          For Transport
+        </button>
+      </div>
+
+      <div className="mt-5 flex justify-end">
+        <button
+          type="button"
+          onClick={() => setShowCopyTypeDialog(false)}
+          className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
       <ConfirmDialog
         open={pendingAction !== null}
